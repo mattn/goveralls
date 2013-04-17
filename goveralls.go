@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -44,6 +45,18 @@ func main() {
 		fmt.Fprintln(os.Stderr, "usage: goveralls [repo_token] [package]")
 	}
 	var cmd *exec.Cmd
+
+	paths := filepath.SplitList(os.Getenv("PATH"))
+	if goroot := os.Getenv("GOROOT"); goroot != "" {
+		paths = append(paths, filepath.Join(goroot, "bin"))
+	}
+	if gopath := os.Getenv("GOPATH"); gopath != "" {
+		for _, path := range filepath.SplitList(gopath) {
+			paths = append(paths, filepath.Join(path, "bin"))
+		}
+	}
+	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
+
 	if len(os.Args) == 2 {
 		cmd = exec.Command("gocov", "test")
 	} else {
