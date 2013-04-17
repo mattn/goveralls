@@ -93,12 +93,13 @@ func main() {
 			}
 			sourceFileMap[file] = sourceFile
 			f, err := os.Open(file)
+			if err != nil {
+				continue
+			}
+			b, err := ioutil.ReadAll(f)
 			if err == nil {
-				b, err := ioutil.ReadAll(f)
-				if err == nil {
-					sourceFile.Source = string(b)
-					sourceFile.Coverage = make([]Coverage, len(strings.Split(sourceFile.Source, "\n")))
-				}
+				sourceFile.Source = string(b)
+				sourceFile.Coverage = make([]Coverage, len(strings.Split(sourceFile.Source, "\n")))
 			}
 			request.SourceFiles = append(request.SourceFiles, sourceFile)
 		}
