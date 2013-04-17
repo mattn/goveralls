@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,17 +19,22 @@ type Coverage interface{}
 
 type SourceFile struct {
 	Name     string     `json:"name"`
-	Source   []string   `json:"source"`
+	Source   string     `json:"source"`
 	Coverage []Coverage `json:"coverage"`
-	isFile   bool
 }
 
-type Result struct {
-	RepoToken        string       `json:"repo_token"`
-	ServiceJobId     string       `json:"service_job_id"`
-	ServiceName      string       `json:"service_name"`
-	ServiceEventType string       `json:"service_event_type"`
-	SourceFiles      []SourceFile `json:"source_files"`
+type Request struct {
+	RepoToken        string        `json:"repo_token"`
+	ServiceJobId     string        `json:"service_job_id"`
+	ServiceName      string        `json:"service_name"`
+	ServiceEventType string        `json:"service_event_type"`
+	SourceFiles      []*SourceFile `json:"source_files"`
+}
+
+type Response struct {
+	Message string `json:"message"`
+	URL     string `json:"url"`
+	Error   bool   `json:"error"`
 }
 
 var re = regexp.MustCompile("^([^/]+)/([^\\s]+)\\s+([^\\s]+)\\s+.*$")
@@ -60,12 +64,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var result Result
-	result.RepoToken = os.Args[1]
-	result.ServiceJobId = time.Now().Format("20060102030405")
-	result.ServiceEventType = "manual"
+	var request Request
+	request.RepoToken = os.Args[1]
+	request.ServiceJobId = time.Now().Format("20060102030405")
+	request.ServiceEventType = "manual"
 
-	sourceFileMap := make(map[string]SourceFile)
+	sourceFileMap := make(map[string]*SourceFile)
 	for _, line := range strings.Split(string(ret), "\n") {
 		matches := re.FindAllStringSubmatch(line, -1)
 		if len(matches) == 0 {
@@ -82,37 +86,28 @@ func main() {
 
 		sourceFile, ok := sourceFileMap[file]
 		if !ok {
-			sourceFile = SourceFile{
+			sourceFile = &SourceFile{
 				Name:     file,
-				Source:   []string{},
+				Source:   "",
 				Coverage: []Coverage{},
-				isFile:   false,
 			}
 			sourceFileMap[file] = sourceFile
-			f, err := os.Open(matches[0][2])
+			f, err := os.Open(file)
 			if err == nil {
 				b, err := ioutil.ReadAll(f)
 				if err == nil {
-					sourceFile.Source = strings.Split(string(b), "\n")
-					sourceFile.Coverage = make([]Coverage, len(sourceFile.Source))
-					sourceFile.isFile = true
+					sourceFile.Source = string(b)
+					sourceFile.Coverage = make([]Coverage, len(strings.Split(sourceFile.Source, "\n")))
 				}
 			}
-			result.SourceFiles = append(result.SourceFiles, sourceFile)
+			request.SourceFiles = append(request.SourceFiles, sourceFile)
 		}
 
 		for _, line := range strings.Split(string(ret), "\n") {
 			if line != "" {
 				pos := strings.Index(line, " ")
 				no, err := strconv.Atoi(line[:pos])
-				if err == nil {
-					if no > len(sourceFile.Source) {
-						for no > len(sourceFile.Source) {
-							sourceFile.Source = append(sourceFile.Source, "")
-							sourceFile.Coverage = append(sourceFile.Coverage, nil)
-						}
-						sourceFile.Source[no-1] = line[pos+5:]
-					}
+				if err == nil && no <= len(sourceFile.Coverage) {
 					if line[pos+1:pos+5] == "MISS" {
 						sourceFile.Coverage[no-1] = 0
 					} else {
@@ -123,7 +118,7 @@ func main() {
 		}
 	}
 
-	b, err := json.Marshal(result)
+	b, err := json.Marshal(request)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -134,5 +129,14 @@ func main() {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
-	io.Copy(os.Stdout, res.Body)
+	var response Response
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if response.Error {
+		log.Fatal(response.Message)
+	}
+	fmt.Println(response.Message)
+	fmt.Println(response.URL)
 }
