@@ -43,6 +43,7 @@ var re = regexp.MustCompile("^([^/]+)/([^\\s]+)\\s+([^\\s]+)\\s+.*$")
 func main() {
 	if len(os.Args) == 1 || len(os.Args) > 3 {
 		fmt.Fprintln(os.Stderr, "usage: goveralls [repo_token] [package]")
+		os.Exit(1)
 	}
 	var cmd *exec.Cmd
 
