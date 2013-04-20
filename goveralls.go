@@ -107,7 +107,7 @@ func main() {
 			sourceFileMap[file] = sourceFile
 			f, err := os.Open(file)
 			if err != nil {
-				continue
+				log.Fatal(err)
 			}
 			b, err := ioutil.ReadAll(f)
 			if err == nil {
