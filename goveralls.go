@@ -38,7 +38,8 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
-var re = regexp.MustCompile("^([^/]+)/([^\\s]+)\\s+([^\\s]+)\\s+.*$")
+var pat = `^(\S+)/(\S+.go)\s+(\S+)\s+`
+var re = regexp.MustCompile(pat)
 
 func main() {
 	if len(os.Args) == 1 || len(os.Args) > 3 {
@@ -69,7 +70,6 @@ func main() {
 		log.Fatal(err)
 	}
 	covret := string(ret)
-
 	cmd = exec.Command("gocov", "report")
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = strings.NewReader(string(ret))
@@ -97,7 +97,6 @@ func main() {
 			log.Fatal(err)
 		}
 		file := matches[0][2]
-
 		sourceFile, ok := sourceFileMap[file]
 		if !ok {
 			sourceFile = &SourceFile{
@@ -108,7 +107,7 @@ func main() {
 			sourceFileMap[file] = sourceFile
 			f, err := os.Open(file)
 			if err != nil {
-				continue
+				log.Fatal(err)
 			}
 			b, err := ioutil.ReadAll(f)
 			if err == nil {
@@ -117,7 +116,6 @@ func main() {
 			}
 			request.SourceFiles = append(request.SourceFiles, sourceFile)
 		}
-
 		for _, line := range strings.Split(string(ret), "\n") {
 			if line != "" {
 				pos := strings.Index(line, " ")
