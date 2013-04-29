@@ -115,7 +115,9 @@ func collectGitInfo() *Git {
 		if err != nil {
 			log.Fatal(err)
 		}
-		results[key] = string(ret)
+		s := string(ret)
+		s = strings.TrimRight(s, "\n")
+		results[key] = s
 	}
 	for _, line := range strings.Split(results["remotes"], "\n") {
 		matches := remotesRE.FindAllStringSubmatch(line, -1)
