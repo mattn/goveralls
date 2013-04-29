@@ -42,6 +42,7 @@ COVERALLS_TOKEN=your_token_goes_here
 Append these lines to your `Commands`:
 
 ```
+go get github.com/axw/gocov/gocov
 go get github.com/mattn/goveralls
 goveralls -service drone.io $COVERALLS_TOKEN
 ```
