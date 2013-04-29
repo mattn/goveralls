@@ -23,3 +23,25 @@ own token.
 $ cd $GOPATH/src/github.com/yourusername/yourpackage
 $ goveralls $TOKEN
 ```
+
+# Continuous Integration
+
+## Travis CI
+
+`goveralls` currently cannot be used with Travis.  This may change when Go 1.1 is released.
+
+
+## Drone.io
+
+Store your Coveralls API token in `Enviornment Variables`:
+
+```
+COVERALLS_TOKEN=your_token_goes_here
+```
+
+Append these lines to your `Commands`:
+
+```
+go get github.com/mattn/goveralls
+goveralls -service drone.io $COVERALLS_TOKEN
+```
