@@ -36,7 +36,8 @@ var usage = func() {
 	flag.PrintDefaults()
 }
 
-var gocovRE = regexp.MustCompile(`^(\S+)/(\S+.go)\s+(\S+)\s+`)
+var reportRE = regexp.MustCompile(`^(\S+)/(\S+.go)\s+(\S+)\s+`)
+var annotateRE = regexp.MustCompile(`^\s*(\d+) (MISS)?`)
 var remotesRE = regexp.MustCompile(`^(\S+)\s+(\S+)`)
 
 // A Head object encapsulates information about the HEAD revision of a git repo.
@@ -175,6 +176,17 @@ func main() {
 	}
 	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
 	//
+	// Initialize Job
+	//
+	var j Job
+	j.RunAt = time.Now()
+	j.RepoToken = flag.Arg(0)
+	j.ServiceJobId = uuid.New()
+	j.Git = collectGitInfo()
+	if *service != "" {
+		j.ServiceName = *service
+	}
+	//
 	// Run gocov
 	//
 	var cmd *exec.Cmd
@@ -196,23 +208,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//
-	// Initialize Job
-	//
-	var j Job
-	j.RunAt = time.Now()
-	j.RepoToken = flag.Arg(0)
-	j.ServiceJobId = uuid.New()
-	j.Git = collectGitInfo()
-	if *service != "" {
-		j.ServiceName = *service
-	}
-	//
-	// Parse Command Output
-	//
 	sourceFileMap := make(map[string]*SourceFile)
 	for _, line := range strings.Split(string(ret), "\n") {
-		matches := gocovRE.FindAllStringSubmatch(line, -1)
+		matches := reportRE.FindAllStringSubmatch(line, -1)
 		if len(matches) == 0 {
 			continue
 		}
@@ -244,16 +242,23 @@ func main() {
 			j.SourceFiles = append(j.SourceFiles, sourceFile)
 		}
 		for _, line := range strings.Split(string(ret), "\n") {
-			if line != "" {
-				pos := strings.Index(line, " ")
-				no, err := strconv.Atoi(line[:pos])
-				if err == nil && no <= len(sourceFile.Coverage) {
-					if line[pos+1:pos+5] == "MISS" {
-						sourceFile.Coverage[no-1] = 0
-					} else {
-						sourceFile.Coverage[no-1] = 1
-					}
-				}
+			matches := annotateRE.FindAllStringSubmatch(line, -1)
+			if len(matches) == 0 {
+				continue
+			}
+			numStr := matches[0][1]
+			miss := matches[0][2]
+			num, err := strconv.Atoi(numStr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if num > len(sourceFile.Coverage) {
+				log.Panic("How did we get here??")
+			}
+			if miss == "MISS" {
+				sourceFile.Coverage[num-1] = 0
+			} else {
+				sourceFile.Coverage[num-1] = 1
 			}
 		}
 	}
