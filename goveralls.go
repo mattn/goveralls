@@ -1,7 +1,9 @@
 package main
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,23 +15,30 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
-type Coverage interface{}
+/*
 
+	https://coveralls.io/docs/api_reference
+
+*/
+
+// A SourceFile represents a source code file and its coverage data for a
+// single job.
 type SourceFile struct {
-	Name     string     `json:"name"`
-	Source   string     `json:"source"`
-	Coverage []Coverage `json:"coverage"`
+	Name     string        `json:"name"`     // File path of this source file
+	Source   string        `json:"source"`   // Full source code of this file
+	Coverage []interface{} `json:"coverage"` // Requires both nulls and integers
 }
 
-type Request struct {
-	RepoToken        string        `json:"repo_token"`
-	ServiceJobId     string        `json:"service_job_id"`
-	ServiceName      string        `json:"service_name"`
-	ServiceEventType string        `json:"service_event_type"`
-	SourceFiles      []*SourceFile `json:"source_files"`
+// A Job represents the coverage data from a single run of a test suite.
+type Job struct {
+	RepoToken    string `json:"repo_token"`
+	ServiceJobId string `json:"service_job_id"`
+	ServiceName  string `json:"service_name"`
+	// service_event_type seems to have been removed from the API
+	// ServiceEventType string        `json:"service_event_type"`
+	SourceFiles []*SourceFile `json:"source_files"`
 }
 
 type Response struct {
@@ -41,13 +50,31 @@ type Response struct {
 var pat = `^(\S+)/(\S+.go)\s+(\S+)\s+`
 var re = regexp.MustCompile(pat)
 
+// usage supplants package flag's Usage variable
+var usage = func() {
+	cmd := os.Args[0]
+	// fmt.Fprintf(os.Stderr, "Usage of %s:\n", cmd)
+	s := "Usage: %s [-service SERVICENAME] TOKEN"
+	fmt.Fprintf(os.Stderr, s, cmd)
+	flag.PrintDefaults()
+}
+
 func main() {
-	if len(os.Args) == 1 || len(os.Args) > 3 {
-		fmt.Fprintln(os.Stderr, "usage: goveralls [repo_token] [package]")
+	//
+	// Parse Flags
+	//
+	flag.Usage = usage
+	service := flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
+	pkg := flag.String("package", "", "Go package")
+	flag.Parse()
+	if flag.NArg() != 1 {
+		flag.Usage()
 		os.Exit(1)
 	}
+	//
+	// Run Commands
+	//
 	var cmd *exec.Cmd
-
 	paths := filepath.SplitList(os.Getenv("PATH"))
 	if goroot := os.Getenv("GOROOT"); goroot != "" {
 		paths = append(paths, filepath.Join(goroot, "bin"))
@@ -58,11 +85,10 @@ func main() {
 		}
 	}
 	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
-
-	if len(os.Args) == 2 {
+	if *pkg == "" {
 		cmd = exec.Command("gocov", "test")
 	} else {
-		cmd = exec.Command("gocov", "test", os.Args[2])
+		cmd = exec.Command("gocov", "test", *pkg)
 	}
 	cmd.Stderr = os.Stderr
 	ret, err := cmd.Output()
@@ -77,12 +103,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	var request Request
-	request.RepoToken = os.Args[1]
-	request.ServiceJobId = time.Now().Format("20060102030405")
-	request.ServiceEventType = "manual"
-
+	//
+	// Compose Job
+	//
+	var j Job
+	j.RepoToken = flag.Arg(0)
+	j.ServiceJobId = uuid.New()
+	// j.ServiceEventType = "manual"
+	if *service != "" {
+		j.ServiceName = *service
+	}
+	//
+	// Parse Command Output
+	//
 	sourceFileMap := make(map[string]*SourceFile)
 	for _, line := range strings.Split(string(ret), "\n") {
 		matches := re.FindAllStringSubmatch(line, -1)
@@ -102,7 +135,7 @@ func main() {
 			sourceFile = &SourceFile{
 				Name:     file,
 				Source:   "",
-				Coverage: []Coverage{},
+				Coverage: []interface{}{},
 			}
 			sourceFileMap[file] = sourceFile
 			f, err := os.Open(file)
@@ -112,9 +145,9 @@ func main() {
 			b, err := ioutil.ReadAll(f)
 			if err == nil {
 				sourceFile.Source = string(b)
-				sourceFile.Coverage = make([]Coverage, len(strings.Split(sourceFile.Source, "\n")))
+				sourceFile.Coverage = make([]interface{}, len(strings.Split(sourceFile.Source, "\n")))
 			}
-			request.SourceFiles = append(request.SourceFiles, sourceFile)
+			j.SourceFiles = append(j.SourceFiles, sourceFile)
 		}
 		for _, line := range strings.Split(string(ret), "\n") {
 			if line != "" {
@@ -131,7 +164,7 @@ func main() {
 		}
 	}
 
-	b, err := json.Marshal(request)
+	b, err := json.Marshal(j)
 	if err != nil {
 		log.Fatal(err)
 	}
