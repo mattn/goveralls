@@ -48,7 +48,6 @@ goveralls -service drone.io $COVERALLS_TOKEN
 ```
 
 # License
---------
 
 under the MIT License: http://mattn.mit-license.org/2013
 
