@@ -1,6 +1,6 @@
 // Copyright (c) 2013 Yasuhiro Matsumoto, Jason McVetta.
-// This is Free Software,  released under the terms of the GPL v3.  See
-// http://www.gnu.org/copyleft/gpl.html for details.
+// This is Free Software,  released under the MIT license.
+// See http://mattn.mit-license.org/2013 for details.
 
 // goveralls is a Go client for Coveralls.io.
 package main
