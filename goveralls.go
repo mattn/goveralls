@@ -1,7 +1,14 @@
+// Copyright (c) 2013 Yasuhiro Matsumoto, Jason McVetta.
+// This is Free Software,  released under the terms of the GPL v3.  See
+// http://www.gnu.org/copyleft/gpl.html for details.
+
+// goveralls is a Go client for Coveralls.io.
 package main
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,38 +23,150 @@ import (
 	"time"
 )
 
-type Coverage interface{}
+/*
+	https://coveralls.io/docs/api_reference
+*/
 
+// usage supplants package flag's Usage variable
+var usage = func() {
+	cmd := os.Args[0]
+	// fmt.Fprintf(os.Stderr, "Usage of %s:\n", cmd)
+	s := "Usage: %s [options] TOKEN\n"
+	fmt.Fprintf(os.Stderr, s, cmd)
+	flag.PrintDefaults()
+}
+
+var reportRE = regexp.MustCompile(`^(\S+)/(\S+.go)\s+(\S+)\s+`)
+var annotateRE = regexp.MustCompile(`^\s*(\d+) (MISS)?`)
+var remotesRE = regexp.MustCompile(`^(\S+)\s+(\S+)`)
+
+// A Head object encapsulates information about the HEAD revision of a git repo.
+type Head struct {
+	Id             string `json:"id"`
+	AuthorName     string `json:"author_name,omitempty"`
+	AuthorEmail    string `json:"author_email,omitempty"`
+	CommitterName  string `json:"committer_name,omitempty"`
+	CommitterEmail string `json:"committer_email,omitempty"`
+	Message        string `json:"message"`
+}
+
+// A Remote object encapsulates information about a remote of a git repo.
+type Remote struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}
+
+// A Git object encapsulates information about a git repo.
+type Git struct {
+	Head    Head      `json:"head"`
+	Branch  string    `json:"branch"`
+	Remotes []*Remote `json:"remotes,omitempty"`
+}
+
+// A SourceFile represents a source code file and its coverage data for a
+// single job.
 type SourceFile struct {
-	Name     string     `json:"name"`
-	Source   string     `json:"source"`
-	Coverage []Coverage `json:"coverage"`
+	Name     string        `json:"name"`     // File path of this source file
+	Source   string        `json:"source"`   // Full source code of this file
+	Coverage []interface{} `json:"coverage"` // Requires both nulls and integers
 }
 
-type Request struct {
-	RepoToken        string        `json:"repo_token"`
-	ServiceJobId     string        `json:"service_job_id"`
-	ServiceName      string        `json:"service_name"`
-	ServiceEventType string        `json:"service_event_type"`
-	SourceFiles      []*SourceFile `json:"source_files"`
+// A Job represents the coverage data from a single run of a test suite.
+type Job struct {
+	RepoToken    string        `json:"repo_token"`
+	ServiceJobId string        `json:"service_job_id"`
+	ServiceName  string        `json:"service_name"`
+	SourceFiles  []*SourceFile `json:"source_files"`
+	Git          *Git          `json:"git,omitempty"`
+	RunAt        time.Time     `json:"run_at"`
 }
 
+// A Response is returned by the Coveralls.io API.
 type Response struct {
 	Message string `json:"message"`
 	URL     string `json:"url"`
 	Error   bool   `json:"error"`
 }
 
-var pat = `^(\S+)/(\S+.go)\s+(\S+)\s+`
-var re = regexp.MustCompile(pat)
+// collectGitInfo runs several git commands to compose a Git object.
+func collectGitInfo() *Git {
+	gitCmds := map[string][]string{
+		"id":      {"git", "rev-parse", "HEAD"},
+		"branch":  {"git", "rev-parse", "--abbrev-ref", "HEAD"},
+		"aname":   {"git", "log", "-1", "--pretty=%aN"},
+		"aemail":  {"git", "log", "-1", "--pretty=%aE"},
+		"cname":   {"git", "log", "-1", "--pretty=%cN"},
+		"cemail":  {"git", "log", "-1", "--pretty=%cE"},
+		"message": {"git", "log", "-1", "--pretty=%s"},
+		"remotes": {"git", "remote", "-v"},
+	}
+	results := map[string]string{}
+	remotes := map[string]Remote{}
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for key, args := range gitCmds {
+		cmd := exec.Cmd{}
+		cmd.Path = gitPath
+		cmd.Args = args
+		cmd.Stderr = os.Stderr
+		ret, err := cmd.Output()
+		if err != nil {
+			log.Fatal(err)
+		}
+		s := string(ret)
+		s = strings.TrimRight(s, "\n")
+		results[key] = s
+	}
+	for _, line := range strings.Split(results["remotes"], "\n") {
+		matches := remotesRE.FindAllStringSubmatch(line, -1)
+		if len(matches) != 1 {
+			continue
+		}
+		if len(matches[0]) != 3 {
+			continue
+		}
+		name := matches[0][1]
+		url := matches[0][2]
+		r := Remote{
+			Name: name,
+			Url:  url,
+		}
+		remotes[name] = r
+	}
+	h := Head{}
+	h.Id = results["id"]
+	h.AuthorName = results["aname"]
+	h.AuthorEmail = results["aemail"]
+	h.CommitterName = results["cname"]
+	h.CommitterEmail = results["cemail"]
+	h.Message = results["message"]
+	g := Git{}
+	g.Head = h
+	g.Branch = results["branch"]
+	for _, r := range remotes {
+		g.Remotes = append(g.Remotes, &r)
+	}
+	return &g
+}
 
 func main() {
-	if len(os.Args) == 1 || len(os.Args) > 3 {
-		fmt.Fprintln(os.Stderr, "usage: goveralls [repo_token] [package]")
+	log.SetFlags(log.Ltime | log.Lshortfile)
+	//
+	// Parse Flags
+	//
+	flag.Usage = usage
+	service := flag.String("service", "goveralls", "The CI service or other environment in which the test suite was run. ")
+	pkg := flag.String("package", "", "Go package")
+	flag.Parse()
+	if flag.NArg() != 1 {
+		flag.Usage()
 		os.Exit(1)
 	}
-	var cmd *exec.Cmd
-
+	//
+	// Setup PATH environment variable
+	//
 	paths := filepath.SplitList(os.Getenv("PATH"))
 	if goroot := os.Getenv("GOROOT"); goroot != "" {
 		paths = append(paths, filepath.Join(goroot, "bin"))
@@ -58,11 +177,25 @@ func main() {
 		}
 	}
 	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
-
-	if len(os.Args) == 2 {
+	//
+	// Initialize Job
+	//
+	var j Job
+	j.RunAt = time.Now()
+	j.RepoToken = flag.Arg(0)
+	j.ServiceJobId = uuid.New()
+	j.Git = collectGitInfo()
+	if *service != "" {
+		j.ServiceName = *service
+	}
+	//
+	// Run gocov
+	//
+	var cmd *exec.Cmd
+	if *pkg == "" {
 		cmd = exec.Command("gocov", "test")
 	} else {
-		cmd = exec.Command("gocov", "test", os.Args[2])
+		cmd = exec.Command("gocov", "test", *pkg)
 	}
 	cmd.Stderr = os.Stderr
 	ret, err := cmd.Output()
@@ -77,15 +210,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	var request Request
-	request.RepoToken = os.Args[1]
-	request.ServiceJobId = time.Now().Format("20060102030405")
-	request.ServiceEventType = "manual"
-
 	sourceFileMap := make(map[string]*SourceFile)
 	for _, line := range strings.Split(string(ret), "\n") {
-		matches := re.FindAllStringSubmatch(line, -1)
+		matches := reportRE.FindAllStringSubmatch(line, -1)
 		if len(matches) == 0 {
 			continue
 		}
@@ -102,7 +229,7 @@ func main() {
 			sourceFile = &SourceFile{
 				Name:     file,
 				Source:   "",
-				Coverage: []Coverage{},
+				Coverage: []interface{}{},
 			}
 			sourceFileMap[file] = sourceFile
 			f, err := os.Open(file)
@@ -112,26 +239,33 @@ func main() {
 			b, err := ioutil.ReadAll(f)
 			if err == nil {
 				sourceFile.Source = string(b)
-				sourceFile.Coverage = make([]Coverage, len(strings.Split(sourceFile.Source, "\n")))
+				sourceFile.Coverage = make([]interface{}, len(strings.Split(sourceFile.Source, "\n")))
 			}
-			request.SourceFiles = append(request.SourceFiles, sourceFile)
+			j.SourceFiles = append(j.SourceFiles, sourceFile)
 		}
 		for _, line := range strings.Split(string(ret), "\n") {
-			if line != "" {
-				pos := strings.Index(line, " ")
-				no, err := strconv.Atoi(line[:pos])
-				if err == nil && no <= len(sourceFile.Coverage) {
-					if line[pos+1:pos+5] == "MISS" {
-						sourceFile.Coverage[no-1] = 0
-					} else {
-						sourceFile.Coverage[no-1] = 1
-					}
-				}
+			matches := annotateRE.FindAllStringSubmatch(line, -1)
+			if len(matches) == 0 {
+				continue
+			}
+			numStr := matches[0][1]
+			miss := matches[0][2]
+			num, err := strconv.Atoi(numStr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if num > len(sourceFile.Coverage) {
+				log.Panic("How did we get here??")
+			}
+			if miss == "MISS" {
+				sourceFile.Coverage[num-1] = 0
+			} else {
+				sourceFile.Coverage[num-1] = 1
 			}
 		}
 	}
 
-	b, err := json.Marshal(request)
+	b, err := json.Marshal(j)
 	if err != nil {
 		log.Fatal(err)
 	}
