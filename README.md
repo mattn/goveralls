@@ -21,10 +21,13 @@ own token.
 
 ```bash
 $ cd $GOPATH/src/github.com/yourusername/yourpackage
-$ goveralls $TOKEN
+$ goveralls your_repos_coveralls_token
 ```
 
 # Continuous Integration
+
+There is no need to run `go test` separately, as `goveralls` runs the entire
+test suite.
 
 ## Travis CI
 
@@ -39,13 +42,20 @@ Store your Coveralls API token in `Enviornment Variables`:
 COVERALLS_TOKEN=your_token_goes_here
 ```
 
-Append these lines to your `Commands`:
+Replace the `go test` line in your `Commands` with these lines:
 
 ```
 go get github.com/axw/gocov/gocov
 go get github.com/mattn/goveralls
 goveralls -service drone.io $COVERALLS_TOKEN
 ```
+
+You can use the `-v` flag to see verbose output from the test suite:
+
+```
+goveralls -v -service drone.io $COVERALLS_TOKEN
+```
+
 
 # License
 
