@@ -159,6 +159,7 @@ func main() {
 	flag.Usage = usage
 	service := flag.String("service", "goveralls", "The CI service or other environment in which the test suite was run. ")
 	pkg := flag.String("package", "", "Go package")
+	verbose := flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
 	flag.Parse()
 	if flag.NArg() != 1 {
 		flag.Usage()
@@ -191,12 +192,15 @@ func main() {
 	//
 	// Run gocov
 	//
-	var cmd *exec.Cmd
-	if *pkg == "" {
-		cmd = exec.Command("gocov", "test")
-	} else {
-		cmd = exec.Command("gocov", "test", *pkg)
+	cmd := exec.Command("gocov")
+	args := []string{"gocov", "test"}
+	if *verbose {
+		args = append(args, "-v")
 	}
+	if *pkg != "" {
+		args = append(args, *pkg)
+	}
+	cmd.Args = args
 	cmd.Stderr = os.Stderr
 	ret, err := cmd.Output()
 	if err != nil {
