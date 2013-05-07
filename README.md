@@ -21,7 +21,7 @@ own token.
 
 ```bash
 $ cd $GOPATH/src/github.com/yourusername/yourpackage
-$ goveralls $TOKEN
+$ goveralls your_repos_coveralls_token
 ```
 
 # Continuous Integration
