@@ -88,6 +88,16 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
+type GocovResult struct {
+	Packages []struct {
+		Name string
+		Functions []struct {
+			Name string
+			File string
+		}
+	}
+}
+
 // collectGitInfo runs several git commands to compose a Git object.
 func collectGitInfo() *Git {
 	gitCmds := map[string][]string{
@@ -206,6 +216,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var result GocovResult
+	err = json.Unmarshal(ret, &result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	covret := string(ret)
 	cmd = exec.Command("gocov", "report")
 	cmd.Stderr = os.Stderr
@@ -214,6 +231,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	sourceFileMap := make(map[string]*SourceFile)
 	for _, line := range strings.Split(string(ret), "\n") {
 		matches := reportRE.FindAllStringSubmatch(line, -1)
@@ -228,6 +246,13 @@ func main() {
 			log.Fatal(err)
 		}
 		file := matches[0][2]
+		for _, pkg := range result.Packages {
+			for _, fnc := range pkg.Functions {
+				if fnc.Name == matches[0][3] {
+					file = fnc.File
+				}
+			}
+		}
 		sourceFile, ok := sourceFileMap[file]
 		if !ok {
 			sourceFile = &SourceFile{
@@ -273,6 +298,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if j.RepoToken == "" {
+		fmt.Println("Succeeded")
+		os.Exit(0)
+	}
+
 	params := make(url.Values)
 	params.Set("json", string(b))
 	res, err := http.PostForm("https://coveralls.io/api/v1/jobs", params)
