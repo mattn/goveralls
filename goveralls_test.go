@@ -10,6 +10,8 @@ import (
 )
 
 func TestUsage(t *testing.T) {
+	tmp := prepareTest(t)
+	defer os.RemoveAll(tmp)
 	cmd := exec.Command("goveralls", "-h")
 	b, err := cmd.CombinedOutput()
 	if err == nil {
@@ -22,31 +24,33 @@ func TestUsage(t *testing.T) {
 }
 
 func TestGoveralls(t *testing.T) {
-	tmp := os.TempDir()
-	tmp = filepath.Join(tmp, uuid.New())
-	gopath := os.Getenv("GOPATH")
-	os.Setenv("GOPATH", tmp)
-	defer func() {
-		os.RemoveAll(tmp)
-		os.Setenv("GOPATH", gopath)
-	}()
-
-	b, err := exec.Command("go", "get", "github.com/mattn/goveralls/tester").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Expected %v, but %v: %v", nil, err, string(b))
-	}
-	b, err = exec.Command("go", "get", "github.com/axw/gocov").CombinedOutput()
-	if err != nil {
-		t.Fatalf("Expected %v, but %v: %v", nil, err, string(b))
-	}
-	cmd := exec.Command("goveralls", "-package=github.com/mattn/goveralls/tester", "")
-	b, err = cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("Expected %v, but %v", nil, err)
-	}
+	tmp := prepareTest(t)
+	defer os.RemoveAll(tmp)
+	runCmd(t, "go", "get", "github.com/mattn/goveralls/tester")
+	runCmd(t, "go", "get", "github.com/axw/gocov/gocov")
+	b := runCmd(t, "goveralls", "-package=github.com/mattn/goveralls/tester", "")
 	lines := strings.Split(strings.TrimSpace(string(b)), "\n")
 	s := lines[len(lines)-1]
 	if s != "Succeeded" {
 		t.Fatalf("Expected test of tester are succeeded, but failured")
 	}
+}
+
+func prepareTest(t *testing.T) (tmpPath string) {
+	tmp := os.TempDir()
+	tmp = filepath.Join(tmp, uuid.New())
+	os.Setenv("GOPATH", tmp)
+	path := os.Getenv("PATH")
+	path = tmp + "/bin:" + path
+	os.Setenv("PATH", path)
+	runCmd(t, "go", "get", "github.com/mattn/goveralls")
+	return tmp
+}
+
+func runCmd(t *testing.T, cmd string, args ...string) []byte {
+	b, err := exec.Command(cmd, args...).CombinedOutput()
+	if err != nil {
+		t.Fatalf("Expected %v, but %v: %v", nil, err, string(b))
+	}
+	return b
 }
