@@ -90,7 +90,7 @@ type Response struct {
 
 type GocovResult struct {
 	Packages []struct {
-		Name string
+		Name      string
 		Functions []struct {
 			Name string
 			File string

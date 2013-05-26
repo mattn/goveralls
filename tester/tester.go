@@ -11,6 +11,3 @@ func GoverallsTester() string {
 	}
 	return s
 }
-
-
-
