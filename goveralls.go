@@ -238,7 +238,7 @@ func main() {
 		if len(matches) == 0 {
 			continue
 		}
-		cmd = exec.Command("gocov", "annotate", "-", matches[0][1]+"."+matches[0][3])
+		cmd = exec.Command("gocov", "annotate", "-", "^"+matches[0][1]+"."+matches[0][3]+"$")
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = strings.NewReader(covret)
 		ret, err = cmd.Output()
