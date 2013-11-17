@@ -238,6 +238,7 @@ func main() {
 		if len(matches) == 0 {
 			continue
 		}
+		funcName := matches[0][3]
 		cmd = exec.Command("gocov", "annotate", "-", "^"+matches[0][1]+"."+matches[0][3]+"$")
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = strings.NewReader(covret)
@@ -248,7 +249,7 @@ func main() {
 		file := matches[0][2]
 		for _, pkg := range result.Packages {
 			for _, fnc := range pkg.Functions {
-				if fnc.Name == matches[0][3] {
+				if fnc.Name == funcName {
 					file = fnc.File
 				}
 			}
@@ -284,7 +285,8 @@ func main() {
 				log.Fatal(err)
 			}
 			if num > len(sourceFile.Coverage) {
-				log.Panic("How did we get here??")
+				log.Printf("Line mismatch on func %q, ignoring", funcName)
+				break
 			}
 			if miss == "MISS" {
 				sourceFile.Coverage[num-1] = 0
