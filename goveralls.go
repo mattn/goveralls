@@ -6,7 +6,7 @@
 package main
 
 import (
-	"code.google.com/p/go-uuid/uuid"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -18,9 +18,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
+
+	"code.google.com/p/go-uuid/uuid"
 )
 
 /*
@@ -92,8 +93,12 @@ type GocovResult struct {
 	Packages []struct {
 		Name      string
 		Functions []struct {
-			Name string
-			File string
+			Name       string
+			File       string
+			Start, End int
+			Statements []struct {
+				Start, End, Reached int
+			}
 		}
 	}
 }
@@ -223,75 +228,58 @@ func main() {
 		log.Fatal(err)
 	}
 
-	covret := string(ret)
-	cmd = exec.Command("gocov", "report")
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = strings.NewReader(string(ret))
-	ret, err = cmd.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+	sourceFileMap := map[string]*SourceFile{}
+	// Find all the files and load their content
+	fileContent := map[string][]byte{}
+	for _, pkg := range result.Packages {
+		for _, fun := range pkg.Functions {
+			b, ok := fileContent[fun.File]
+			if !ok {
+				b, err = ioutil.ReadFile(fun.File)
+				if err != nil {
+					log.Fatalf("Error reading %v: %v", fun.File, err)
+				}
+				fileContent[fun.File] = b
+				// Count the lines
+				sf := &SourceFile{
+					Name:     fun.File,
+					Source:   string(b),
+					Coverage: make([]interface{}, bytes.Count(b, []byte{'\n'})),
+				}
+				sourceFileMap[fun.File] = sf
+				j.SourceFiles = append(j.SourceFiles, sf)
+			}
+			sf := sourceFileMap[fun.File]
 
-	sourceFileMap := make(map[string]*SourceFile)
-	for _, line := range strings.Split(string(ret), "\n") {
-		matches := reportRE.FindAllStringSubmatch(line, -1)
-		if len(matches) == 0 {
-			continue
-		}
-		funcName := matches[0][3]
-		cmd = exec.Command("gocov", "annotate", "-", "^"+matches[0][1]+"."+matches[0][3]+"$")
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = strings.NewReader(covret)
-		ret, err = cmd.Output()
-		if err != nil {
-			log.Fatal(err)
-		}
-		file := matches[0][2]
-		for _, pkg := range result.Packages {
-			for _, fnc := range pkg.Functions {
-				if fnc.Name == funcName {
-					file = fnc.File
+			// First, mark all parts of a mentioned function as covered.
+			linenum := 0
+			for i := range b {
+				if i >= fun.End {
+					break
+				}
+				if b[i] == '\n' {
+					linenum++
+				}
+				if i >= fun.Start {
+					sf.Coverage[linenum] = 1
 				}
 			}
-		}
-		sourceFile, ok := sourceFileMap[file]
-		if !ok {
-			sourceFile = &SourceFile{
-				Name:     file,
-				Source:   "",
-				Coverage: []interface{}{},
-			}
-			sourceFileMap[file] = sourceFile
-			f, err := os.Open(file)
-			if err != nil {
-				log.Fatal(err)
-			}
-			b, err := ioutil.ReadAll(f)
-			if err == nil {
-				sourceFile.Source = string(b)
-				sourceFile.Coverage = make([]interface{}, len(strings.Split(sourceFile.Source, "\n")))
-			}
-			j.SourceFiles = append(j.SourceFiles, sourceFile)
-		}
-		for _, line := range strings.Split(string(ret), "\n") {
-			matches := annotateRE.FindAllStringSubmatch(line, -1)
-			if len(matches) == 0 {
-				continue
-			}
-			numStr := matches[0][1]
-			miss := matches[0][2]
-			num, err := strconv.Atoi(numStr)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if num > len(sourceFile.Coverage) {
-				log.Printf("Line mismatch on func %q, ignoring", funcName)
-				break
-			}
-			if miss == "MISS" {
-				sourceFile.Coverage[num-1] = 0
-			} else {
-				sourceFile.Coverage[num-1] = 1
+
+			// Then paint each statement as directed.  This will mark misses.
+			for _, st := range fun.Statements {
+				linenum := 0
+				for i := range b {
+					if i >= st.End {
+						break
+					}
+					if b[i] == '\n' {
+						linenum++
+					}
+					if i >= st.Start {
+						sf.Coverage[linenum] = st.Reached
+						break // only count the statement start
+					}
+				}
 			}
 		}
 	}
