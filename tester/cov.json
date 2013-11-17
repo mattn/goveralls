@@ -1,0 +1,1 @@
+{"Packages":[{"Name":"github.com/dustin/goveralls/tester","Functions":[{"Name":"GoverallsTester","File":"/Users/dustin/go/src/github.com/dustin/goveralls/tester/tester.go","Start":34,"End":150,"Statements":[{"Start":67,"End":101,"Reached":1},{"Start":103,"End":138,"Reached":1},{"Start":118,"End":135,"Reached":1},{"Start":140,"End":148,"Reached":1}],"Entered":0,"Left":0}]}]}

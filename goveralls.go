@@ -30,8 +30,9 @@ import (
 */
 
 var (
-	pkg     = flag.String("package", "", "Go package")
-	verbose = flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
+	pkg       = flag.String("package", "", "Go package")
+	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
+	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
 )
 
 // usage supplants package flag's Usage variable
@@ -172,7 +173,7 @@ func collectGitInfo() *Git {
 	return &g
 }
 
-func loadCoverage() (io.ReadCloser, error) {
+func runGocov() (io.ReadCloser, error) {
 	cmd := exec.Command("gocov")
 	args := []string{"gocov", "test"}
 	if *verbose {
@@ -189,6 +190,14 @@ func loadCoverage() (io.ReadCloser, error) {
 	}
 
 	return ioutil.NopCloser(bytes.NewReader(ret)), nil
+}
+
+func loadCoverage() (io.ReadCloser, error) {
+	if *gocovjson == "" {
+		return runGocov()
+	} else {
+		return os.Open(*gocovjson)
+	}
 }
 
 func main() {

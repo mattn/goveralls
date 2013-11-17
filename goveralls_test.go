@@ -47,6 +47,23 @@ func TestGoveralls(t *testing.T) {
 	}
 }
 
+func TestGoverallsExisting(t *testing.T) {
+	p := myImportPath()
+	t.Logf("My import path is %q", p)
+
+	tmp := prepareTest(t)
+	defer os.RemoveAll(tmp)
+	runCmd(t, "go", "get", p+"/tester")
+	runCmd(t, "go", "get", "github.com/axw/gocov/gocov")
+	b := runCmd(t, "goveralls", "-gocovdata=tester/cov.json",
+		"-package="+p+"/tester", "")
+	lines := strings.Split(strings.TrimSpace(string(b)), "\n")
+	s := lines[len(lines)-1]
+	if s != "Succeeded" {
+		t.Fatalf("Expected test of tester are succeeded, but failured")
+	}
+}
+
 func prepareTest(t *testing.T) (tmpPath string) {
 	tmp := os.TempDir()
 	tmp = filepath.Join(tmp, uuid.New())
