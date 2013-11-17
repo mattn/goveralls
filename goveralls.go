@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -27,6 +28,11 @@ import (
 /*
 	https://coveralls.io/docs/api_reference
 */
+
+var (
+	pkg     = flag.String("package", "", "Go package")
+	verbose = flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
+)
 
 // usage supplants package flag's Usage variable
 var usage = func() {
@@ -166,15 +172,33 @@ func collectGitInfo() *Git {
 	return &g
 }
 
+func loadCoverage() (io.ReadCloser, error) {
+	cmd := exec.Command("gocov")
+	args := []string{"gocov", "test"}
+	if *verbose {
+		args = append(args, "-v")
+	}
+	if *pkg != "" {
+		args = append(args, *pkg)
+	}
+	cmd.Args = args
+	cmd.Stderr = os.Stderr
+	ret, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.NopCloser(bytes.NewReader(ret)), nil
+}
+
 func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	//
 	// Parse Flags
 	//
 	flag.Usage = usage
-	service := flag.String("service", "goveralls", "The CI service or other environment in which the test suite was run. ")
-	pkg := flag.String("package", "", "Go package")
-	verbose := flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
+	service := flag.String("service", "goveralls",
+		"The CI service or other environment in which the test suite was run. ")
 	flag.Parse()
 	if flag.NArg() != 1 {
 		flag.Usage()
@@ -193,6 +217,7 @@ func main() {
 		}
 	}
 	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
+
 	//
 	// Initialize Job
 	//
@@ -204,29 +229,19 @@ func main() {
 	if *service != "" {
 		j.ServiceName = *service
 	}
-	//
-	// Run gocov
-	//
-	cmd := exec.Command("gocov")
-	args := []string{"gocov", "test"}
-	if *verbose {
-		args = append(args, "-v")
-	}
-	if *pkg != "" {
-		args = append(args, *pkg)
-	}
-	cmd.Args = args
-	cmd.Stderr = os.Stderr
-	ret, err := cmd.Output()
+
+	cov, err := loadCoverage()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error getting coverage data: %v", err)
 	}
 
 	var result GocovResult
-	err = json.Unmarshal(ret, &result)
+	d := json.NewDecoder(cov)
+	err = d.Decode(&result)
 	if err != nil {
 		log.Fatal(err)
 	}
+	cov.Close()
 
 	sourceFileMap := map[string]*SourceFile{}
 	// Find all the files and load their content
