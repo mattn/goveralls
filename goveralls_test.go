@@ -1,13 +1,23 @@
 package main
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"code.google.com/p/go-uuid/uuid"
 )
+
+func myImportPath() string {
+	cmd := exec.Command("go", "list")
+	b, err := cmd.CombinedOutput()
+	if err == nil {
+		panic(err)
+	}
+	return strings.TrimSpace(string(b))
+}
 
 func TestUsage(t *testing.T) {
 	tmp := prepareTest(t)
@@ -25,10 +35,11 @@ func TestUsage(t *testing.T) {
 
 func TestGoveralls(t *testing.T) {
 	tmp := prepareTest(t)
+	p := myImportPath()
 	defer os.RemoveAll(tmp)
-	runCmd(t, "go", "get", "github.com/mattn/goveralls/tester")
+	runCmd(t, "go", "get", p+"/tester")
 	runCmd(t, "go", "get", "github.com/axw/gocov/gocov")
-	b := runCmd(t, "goveralls", "-package=github.com/mattn/goveralls/tester", "")
+	b := runCmd(t, "./goveralls", "-package="+p+"/tester", "")
 	lines := strings.Split(strings.TrimSpace(string(b)), "\n")
 	s := lines[len(lines)-1]
 	if s != "Succeeded" {
@@ -43,7 +54,7 @@ func prepareTest(t *testing.T) (tmpPath string) {
 	path := os.Getenv("PATH")
 	path = tmp + "/bin:" + path
 	os.Setenv("PATH", path)
-	runCmd(t, "go", "get", "github.com/mattn/goveralls")
+	runCmd(t, "go", "get", myImportPath())
 	return tmp
 }
 
