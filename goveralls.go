@@ -6,10 +6,11 @@
 package main
 
 import (
-	"code.google.com/p/go-uuid/uuid"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,14 +19,21 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
+
+	"code.google.com/p/go-uuid/uuid"
 )
 
 /*
 	https://coveralls.io/docs/api_reference
 */
+
+var (
+	pkg       = flag.String("package", "", "Go package")
+	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
+	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
+)
 
 // usage supplants package flag's Usage variable
 var usage = func() {
@@ -92,8 +100,12 @@ type GocovResult struct {
 	Packages []struct {
 		Name      string
 		Functions []struct {
-			Name string
-			File string
+			Name       string
+			File       string
+			Start, End int
+			Statements []struct {
+				Start, End, Reached int
+			}
 		}
 	}
 }
@@ -161,15 +173,41 @@ func collectGitInfo() *Git {
 	return &g
 }
 
+func runGocov() (io.ReadCloser, error) {
+	cmd := exec.Command("gocov")
+	args := []string{"gocov", "test"}
+	if *verbose {
+		args = append(args, "-v")
+	}
+	if *pkg != "" {
+		args = append(args, *pkg)
+	}
+	cmd.Args = args
+	cmd.Stderr = os.Stderr
+	ret, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.NopCloser(bytes.NewReader(ret)), nil
+}
+
+func loadCoverage() (io.ReadCloser, error) {
+	if *gocovjson == "" {
+		return runGocov()
+	} else {
+		return os.Open(*gocovjson)
+	}
+}
+
 func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	//
 	// Parse Flags
 	//
 	flag.Usage = usage
-	service := flag.String("service", "goveralls", "The CI service or other environment in which the test suite was run. ")
-	pkg := flag.String("package", "", "Go package")
-	verbose := flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
+	service := flag.String("service", "goveralls",
+		"The CI service or other environment in which the test suite was run. ")
 	flag.Parse()
 	if flag.NArg() != 1 {
 		flag.Usage()
@@ -188,6 +226,7 @@ func main() {
 		}
 	}
 	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
+
 	//
 	// Initialize Job
 	//
@@ -199,97 +238,72 @@ func main() {
 	if *service != "" {
 		j.ServiceName = *service
 	}
-	//
-	// Run gocov
-	//
-	cmd := exec.Command("gocov")
-	args := []string{"gocov", "test"}
-	if *verbose {
-		args = append(args, "-v")
-	}
-	if *pkg != "" {
-		args = append(args, *pkg)
-	}
-	cmd.Args = args
-	cmd.Stderr = os.Stderr
-	ret, err := cmd.Output()
+
+	cov, err := loadCoverage()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error getting coverage data: %v", err)
 	}
 
 	var result GocovResult
-	err = json.Unmarshal(ret, &result)
+	d := json.NewDecoder(cov)
+	err = d.Decode(&result)
 	if err != nil {
 		log.Fatal(err)
 	}
+	cov.Close()
 
-	covret := string(ret)
-	cmd = exec.Command("gocov", "report")
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = strings.NewReader(string(ret))
-	ret, err = cmd.Output()
-	if err != nil {
-		log.Fatal(err)
-	}
+	sourceFileMap := map[string]*SourceFile{}
+	// Find all the files and load their content
+	fileContent := map[string][]byte{}
+	for _, pkg := range result.Packages {
+		for _, fun := range pkg.Functions {
+			b, ok := fileContent[fun.File]
+			if !ok {
+				b, err = ioutil.ReadFile(fun.File)
+				if err != nil {
+					log.Fatalf("Error reading %v: %v", fun.File, err)
+				}
+				fileContent[fun.File] = b
+				// Count the lines
+				sf := &SourceFile{
+					Name:     fun.File,
+					Source:   string(b),
+					Coverage: make([]interface{}, bytes.Count(b, []byte{'\n'})),
+				}
+				sourceFileMap[fun.File] = sf
+				j.SourceFiles = append(j.SourceFiles, sf)
+			}
+			sf := sourceFileMap[fun.File]
 
-	sourceFileMap := make(map[string]*SourceFile)
-	for _, line := range strings.Split(string(ret), "\n") {
-		matches := reportRE.FindAllStringSubmatch(line, -1)
-		if len(matches) == 0 {
-			continue
-		}
-		cmd = exec.Command("gocov", "annotate", "-", "^"+matches[0][1]+"."+matches[0][3]+"$")
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = strings.NewReader(covret)
-		ret, err = cmd.Output()
-		if err != nil {
-			log.Fatal(err)
-		}
-		file := matches[0][2]
-		for _, pkg := range result.Packages {
-			for _, fnc := range pkg.Functions {
-				if fnc.Name == matches[0][3] {
-					file = fnc.File
+			// First, mark all parts of a mentioned function as covered.
+			linenum := 0
+			for i := range b {
+				if i >= fun.End {
+					break
+				}
+				if b[i] == '\n' {
+					linenum++
+				}
+				if i >= fun.Start {
+					sf.Coverage[linenum] = 1
 				}
 			}
-		}
-		sourceFile, ok := sourceFileMap[file]
-		if !ok {
-			sourceFile = &SourceFile{
-				Name:     file,
-				Source:   "",
-				Coverage: []interface{}{},
-			}
-			sourceFileMap[file] = sourceFile
-			f, err := os.Open(file)
-			if err != nil {
-				log.Fatal(err)
-			}
-			b, err := ioutil.ReadAll(f)
-			if err == nil {
-				sourceFile.Source = string(b)
-				sourceFile.Coverage = make([]interface{}, len(strings.Split(sourceFile.Source, "\n")))
-			}
-			j.SourceFiles = append(j.SourceFiles, sourceFile)
-		}
-		for _, line := range strings.Split(string(ret), "\n") {
-			matches := annotateRE.FindAllStringSubmatch(line, -1)
-			if len(matches) == 0 {
-				continue
-			}
-			numStr := matches[0][1]
-			miss := matches[0][2]
-			num, err := strconv.Atoi(numStr)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if num > len(sourceFile.Coverage) {
-				log.Panic("How did we get here??")
-			}
-			if miss == "MISS" {
-				sourceFile.Coverage[num-1] = 0
-			} else {
-				sourceFile.Coverage[num-1] = 1
+
+			// Then paint each statement as directed.  This will mark misses.
+			for _, st := range fun.Statements {
+				linenum := 0
+				for i := range b {
+					if i >= st.End {
+						break
+					}
+					if b[i] == '\n' {
+						linenum++
+					}
+					if i >= st.Start {
+						sf.Coverage[linenum] = st.Reached
+						break // only count the statement start
+					}
+				}
 			}
 		}
 	}
