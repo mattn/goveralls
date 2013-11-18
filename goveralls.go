@@ -314,7 +314,7 @@ func main() {
 	}
 
 	if j.RepoToken == "" {
-		fmt.Println("Succeeded")
+		os.Stdout.Write(b)
 		os.Exit(0)
 	}
 
