@@ -285,7 +285,12 @@ func main() {
 					linenum++
 				}
 				if i >= fun.Start {
-					sf.Coverage[linenum] = 1
+					// Leaving off a newline at the end of
+					// the file can cause us to compute line
+					// numbers where there are not lines.
+					if linenum < len(sf.Coverage) {
+						sf.Coverage[linenum] = 1
+					}
 				}
 			}
 
