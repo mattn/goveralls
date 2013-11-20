@@ -261,7 +261,8 @@ func main() {
 			if !ok {
 				b, err = ioutil.ReadFile(fun.File)
 				if err != nil {
-					log.Fatalf("Error reading %v: %v", fun.File, err)
+					log.Printf("Error reading %v: %v (skipping)", fun.File, err)
+					continue
 				}
 				fileContent[fun.File] = b
 				// Count the lines
@@ -285,7 +286,12 @@ func main() {
 					linenum++
 				}
 				if i >= fun.Start {
-					sf.Coverage[linenum] = 1
+					// Leaving off a newline at the end of
+					// the file can cause us to compute line
+					// numbers where there are not lines.
+					if linenum < len(sf.Coverage) {
+						sf.Coverage[linenum] = 1
+					}
 				}
 			}
 
@@ -314,7 +320,7 @@ func main() {
 	}
 
 	if j.RepoToken == "" {
-		fmt.Println("Succeeded")
+		os.Stdout.Write(b)
 		os.Exit(0)
 	}
 
