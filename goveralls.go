@@ -261,7 +261,8 @@ func main() {
 			if !ok {
 				b, err = ioutil.ReadFile(fun.File)
 				if err != nil {
-					log.Fatalf("Error reading %v: %v", fun.File, err)
+					log.Printf("Error reading %v: %v (skipping)", fun.File, err)
+					continue
 				}
 				fileContent[fun.File] = b
 				// Count the lines
