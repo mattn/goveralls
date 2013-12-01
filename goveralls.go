@@ -155,20 +155,22 @@ func collectGitInfo() *Git {
 		}
 		remotes[name] = r
 	}
-	h := Head{}
-	h.Id = results["id"]
-	h.AuthorName = results["aname"]
-	h.AuthorEmail = results["aemail"]
-	h.CommitterName = results["cname"]
-	h.CommitterEmail = results["cemail"]
-	h.Message = results["message"]
-	g := Git{}
-	g.Head = h
-	g.Branch = results["branch"]
+	h := Head{
+		Id:             results["id"],
+		AuthorName:     results["aname"],
+		AuthorEmail:    results["aemail"],
+		CommitterName:  results["cname"],
+		CommitterEmail: results["cemail"],
+		Message:        results["message"],
+	}
+	g := &Git{
+		Head:   h,
+		Branch: results["branch"],
+	}
 	for _, r := range remotes {
 		g.Remotes = append(g.Remotes, &r)
 	}
-	return &g
+	return g
 }
 
 func runGocov() (io.ReadCloser, error) {
