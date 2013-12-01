@@ -44,8 +44,6 @@ var usage = func() {
 	flag.PrintDefaults()
 }
 
-var reportRE = regexp.MustCompile(`^(\S+)/(\S+.go)\s+(\S+)\s+`)
-var annotateRE = regexp.MustCompile(`^\s*(\d+) (MISS)?`)
 var remotesRE = regexp.MustCompile(`^(\S+)\s+(\S+)`)
 
 // A Head object encapsulates information about the HEAD revision of a git repo.
