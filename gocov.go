@@ -125,3 +125,15 @@ func parseGocov(cov io.ReadCloser) ([]*SourceFile, error) {
 	}
 	return rv, nil
 }
+
+func getCoverageGocov() []*SourceFile {
+	r, err := loadGocov()
+	if err != nil {
+		log.Fatalf("Error loading gocov results: %v", err)
+	}
+	rv, err := parseGocov(r)
+	if err != nil {
+		log.Fatalf("Error parsing gocov: %v", err)
+	}
+	return rv
+}

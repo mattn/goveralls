@@ -28,6 +28,7 @@ var (
 	pkg       = flag.String("package", "", "Go package")
 	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
 	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
+	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
 )
 
 // usage supplants package flag's Usage variable
@@ -65,15 +66,11 @@ type Response struct {
 }
 
 func getCoverage() []*SourceFile {
-	r, err := loadGocov()
-	if err != nil {
-		log.Fatalf("Error loading gocov results: %v", err)
+	if *coverprof != "" {
+		return parseCover(*coverprof)
+	} else {
+		return getCoverageGocov()
 	}
-	rv, err := parseGocov(r)
-	if err != nil {
-		log.Fatalf("Error parsing gocov: %v", err)
-	}
-	return rv
 }
 
 func main() {
