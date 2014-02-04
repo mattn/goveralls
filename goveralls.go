@@ -26,9 +26,10 @@ import (
 
 var (
 	pkg       = flag.String("package", "", "Go package")
-	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'gocov test'")
+	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'go test'")
 	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
+	repotoken = flag.String("repotoken", "", "Repository Token on coveralls")
 )
 
 // usage supplants package flag's Usage variable
@@ -82,10 +83,7 @@ func main() {
 	service := flag.String("service", "goveralls",
 		"The CI service or other environment in which the test suite was run. ")
 	flag.Parse()
-	if flag.NArg() != 1 {
-		flag.Usage()
-		os.Exit(1)
-	}
+
 	//
 	// Setup PATH environment variable
 	//
@@ -105,7 +103,7 @@ func main() {
 	//
 	j := Job{
 		RunAt:        time.Now(),
-		RepoToken:    flag.Arg(0),
+		RepoToken:    *repotoken,
 		ServiceJobId: uuid.New(),
 		Git:          collectGitInfo(),
 		SourceFiles:  getCoverage(),
