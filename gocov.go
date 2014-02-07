@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"io"
 	"io/ioutil"
 	"log"
@@ -30,6 +31,7 @@ func runGocov() (io.ReadCloser, error) {
 	if *verbose {
 		args = append(args, "-v")
 	}
+	args = append(args, flag.Args()...)
 	if *pkg != "" {
 		args = append(args, *pkg)
 	}
