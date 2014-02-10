@@ -21,7 +21,7 @@ own token.
 
 ```bash
 $ cd $GOPATH/src/github.com/yourusername/yourpackage
-$ goveralls your_repos_coveralls_token
+$ goveralls -repotoken your_repos_coveralls_token
 ```
 
 # Continuous Integration
@@ -47,13 +47,13 @@ Replace the `go test` line in your `Commands` with these lines:
 ```
 go get github.com/axw/gocov/gocov
 go get github.com/mattn/goveralls
-goveralls -service drone.io $COVERALLS_TOKEN
+goveralls -service drone.io -repotoken $COVERALLS_TOKEN
 ```
 
 You can use the `-v` flag to see verbose output from the test suite:
 
 ```
-goveralls -v -service drone.io $COVERALLS_TOKEN
+goveralls -v -service drone.io -repotoken $COVERALLS_TOKEN
 ```
 
 
