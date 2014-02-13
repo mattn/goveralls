@@ -30,6 +30,7 @@ var (
 	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
 	repotoken = flag.String("repotoken", "", "Repository Token on coveralls")
+	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 )
 
 // usage supplants package flag's Usage variable
@@ -80,8 +81,6 @@ func main() {
 	// Parse Flags
 	//
 	flag.Usage = usage
-	service := flag.String("service", "goveralls",
-		"The CI service or other environment in which the test suite was run. ")
 	flag.Parse()
 
 	//
@@ -101,10 +100,15 @@ func main() {
 	//
 	// Initialize Job
 	//
+	jobId := os.Getenv("TRAVIS_JOB_ID")
+	if jobId == "" {
+		jobId = uuid.New()
+	}
+
 	j := Job{
 		RunAt:        time.Now(),
 		RepoToken:    *repotoken,
-		ServiceJobId: uuid.New(),
+		ServiceJobId: jobId,
 		Git:          collectGitInfo(),
 		SourceFiles:  getCoverage(),
 		ServiceName:  *service,
