@@ -119,11 +119,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if j.RepoToken == "" {
-		os.Stdout.Write(b)
-		os.Exit(0)
-	}
-
 	params := make(url.Values)
 	params.Set("json", string(b))
 	res, err := http.PostForm("https://coveralls.io/api/v1/jobs", params)
