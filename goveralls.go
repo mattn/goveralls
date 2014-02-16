@@ -52,7 +52,7 @@ type SourceFile struct {
 
 // A Job represents the coverage data from a single run of a test suite.
 type Job struct {
-	RepoToken    string        `json:"repo_token"`
+	RepoToken    *string       `json:"repo_token,omitempty"`
 	ServiceJobId string        `json:"service_job_id"`
 	ServiceName  string        `json:"service_name"`
 	SourceFiles  []*SourceFile `json:"source_files"`
@@ -104,10 +104,13 @@ func main() {
 	if jobId == "" {
 		jobId = uuid.New()
 	}
+	if *repotoken == "" {
+		repotoken = nil // remove the entry from json
+	}
 
 	j := Job{
 		RunAt:        time.Now(),
-		RepoToken:    *repotoken,
+		RepoToken:    repotoken,
 		ServiceJobId: jobId,
 		Git:          collectGitInfo(),
 		SourceFiles:  getCoverage(),
@@ -117,11 +120,6 @@ func main() {
 	b, err := json.Marshal(j)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if j.RepoToken == "" {
-		os.Stdout.Write(b)
-		os.Exit(0)
 	}
 
 	params := make(url.Values)

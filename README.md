@@ -30,9 +30,10 @@ There is no need to run `go test` separately, as `goveralls` runs the entire
 test suite.
 
 ## Travis CI
-
-`goveralls` currently cannot be used with Travis.  This may change when Go 1.1 is released.
-
+go get code.google.com/p/go.tools/cmd/cover
+go get github.com/hailiang/goveralls
+go test -covermode=count -coverprofile=profile.cov
+goveralls -coverprofile=profile.cov -service=travis-ci
 
 ## Drone.io
 
