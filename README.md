@@ -32,7 +32,7 @@ test suite.
 ## Travis CI
 
     go get code.google.com/p/go.tools/cmd/cover
-    go get github.com/hailiang/goveralls
+    go get github.com/mattn/goveralls
     go test -covermode=count -coverprofile=profile.cov
     goveralls -coverprofile=profile.cov -service=travis-ci
 
