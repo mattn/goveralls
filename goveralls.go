@@ -75,6 +75,30 @@ func getCoverage() []*SourceFile {
 	}
 }
 
+var vscDirs = []string{".git", ".hg", ".bzr", ".svn"}
+
+func findRepositoryRoot(dir string) (string, bool) {
+	for _, vcsdir := range vscDirs {
+		if d, err := os.Stat(filepath.Join(dir, vcsdir)); err == nil && d.IsDir() {
+			return dir, true
+		}
+	}
+	nextdir := filepath.Dir(dir)
+	if nextdir == dir {
+		return "", false
+	}
+	return findRepositoryRoot(nextdir)
+}
+
+func getCoverallsSourceFileName(name string) string {
+	if dir, ok := findRepositoryRoot(name); !ok {
+		return name
+	} else {
+		filename := strings.TrimPrefix(name, dir+string(os.PathSeparator))
+		return filename
+	}
+}
+
 func main() {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	//
