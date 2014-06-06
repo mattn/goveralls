@@ -79,7 +79,7 @@ func parseGocov(cov io.ReadCloser) ([]*SourceFile, error) {
 				fileContent[fun.File] = b
 				// Count the lines
 				sf := &SourceFile{
-					Name:     fun.File,
+					Name:     getCoverallsSourceFileName(fun.File),
 					Source:   string(b),
 					Coverage: make([]interface{}, bytes.Count(b, []byte{'\n'})),
 				}

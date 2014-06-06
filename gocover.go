@@ -130,7 +130,7 @@ func parseCover(fn string) []*SourceFile {
 			log.Fatalf("Error reading %v: %v", path, err)
 		}
 		sf := &SourceFile{
-			Name:     prof.FileName,
+			Name:     getCoverallsSourceFileName(path),
 			Source:   string(fb),
 			Coverage: make([]interface{}, 1+bytes.Count(fb, []byte{'\n'})),
 		}
