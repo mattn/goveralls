@@ -31,10 +31,30 @@ test suite.
 
 ## Travis CI
 
-    go get code.google.com/p/go.tools/cmd/cover
-    go get github.com/mattn/goveralls
-    go test -covermode=count -coverprofile=profile.cov
-    goveralls -coverprofile=profile.cov -service=travis-ci
+### GitHub Integration
+
+Enable Travis-CI on your github repository settings, and put below's `.travis.yml`.
+
+```
+language: go
+go:
+  - tip
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - go get code.google.com/p/go.tools/cmd/cover
+script:
+    - $HOME/gopath/bin/goveralls -repotoken lAKAWPzcGsD3A8yBX3BGGtRUdJ6CaGERL
+```
+
+### For others:
+
+```
+$ go get code.google.com/p/go.tools/cmd/cover
+$ go get github.com/mattn/goveralls
+$ go test -covermode=count -coverprofile=profile.cov
+$ goveralls -coverprofile=profile.cov -service=travis-ci
+```
 
 ## Drone.io
 
@@ -47,15 +67,15 @@ COVERALLS_TOKEN=your_token_goes_here
 Replace the `go test` line in your `Commands` with these lines:
 
 ```
-go get github.com/axw/gocov/gocov
-go get github.com/mattn/goveralls
-goveralls -service drone.io -repotoken $COVERALLS_TOKEN
+$ go get github.com/axw/gocov/gocov
+$ go get github.com/mattn/goveralls
+$ goveralls -service drone.io -repotoken $COVERALLS_TOKEN
 ```
 
 You can use the `-v` flag to see verbose output from the test suite:
 
 ```
-goveralls -v -service drone.io -repotoken $COVERALLS_TOKEN
+$ goveralls -v -service drone.io -repotoken $COVERALLS_TOKEN
 ```
 
 
