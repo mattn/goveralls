@@ -78,6 +78,7 @@ You can use the `-v` flag to see verbose output from the test suite:
 $ goveralls -v -service drone.io -repotoken $COVERALLS_TOKEN
 ```
 
+For more information, See https://coveralls.io/docs/go
 
 # License
 
