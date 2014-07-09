@@ -52,6 +52,13 @@ func collectGitInfo() *Git {
 		log.Fatal(err)
 	}
 	for key, args := range gitCmds {
+		if key == "branch" {
+			if envBranch := os.Getenv("GIT_BRANCH"); envBranch != "" {
+				results[key] = envBranch
+				continue
+			}
+		}
+
 		cmd := exec.Cmd{}
 		cmd.Path = gitPath
 		cmd.Args = args
