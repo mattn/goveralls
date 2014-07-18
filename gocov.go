@@ -31,6 +31,9 @@ func runGocov() (io.ReadCloser, error) {
 	if *verbose {
 		args = append(args, "-v")
 	}
+	if *race {
+		args = append(args, "-race")
+	}
 	args = append(args, flag.Args()...)
 	if *pkg != "" {
 		args = append(args, *pkg)
