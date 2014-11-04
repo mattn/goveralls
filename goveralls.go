@@ -7,6 +7,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -100,7 +101,7 @@ func getCoverallsSourceFileName(name string) string {
 	}
 }
 
-func main() {
+func process() error {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	//
 	// Parse Flags
@@ -144,24 +145,31 @@ func main() {
 
 	b, err := json.Marshal(j)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	params := make(url.Values)
 	params.Set("json", string(b))
 	res, err := http.PostForm("https://coveralls.io/api/v1/jobs", params)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer res.Body.Close()
 	var response Response
-	err = json.NewDecoder(res.Body).Decode(&response)
-	if err != nil {
-		log.Fatal(err)
+	if err = json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return err
 	}
 	if response.Error {
-		log.Fatal(response.Message)
+		return errors.New(response.Message)
 	}
 	fmt.Println(response.Message)
 	fmt.Println(response.URL)
+	return nil
+}
+
+func main() {
+	if err := process(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
 }
