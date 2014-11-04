@@ -101,7 +101,7 @@ func getCoverallsSourceFileName(name string) string {
 	}
 }
 
-func mainImpl() error {
+func process() error {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	//
 	// Parse Flags
@@ -168,7 +168,7 @@ func mainImpl() error {
 }
 
 func main() {
-	if err := mainImpl(); err != nil {
+	if err := process(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
