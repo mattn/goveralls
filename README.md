@@ -42,7 +42,7 @@ go:
 before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - go get code.google.com/p/go.tools/cmd/cover
+  - go get golang.org/x/tools/cmd/cover
 script:
     - $HOME/gopath/bin/goveralls -repotoken lAKAWPzcGsD3A8yBX3BGGtRUdJ6CaGERL
 ```
@@ -50,7 +50,7 @@ script:
 ### For others:
 
 ```
-$ go get code.google.com/p/go.tools/cmd/cover
+$ go get golang.org/x/tools/cmd/cover
 $ go get github.com/mattn/goveralls
 $ go test -covermode=count -coverprofile=profile.cov
 $ goveralls -coverprofile=profile.cov -service=travis-ci
