@@ -10,6 +10,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -155,9 +156,16 @@ func process() error {
 		return err
 	}
 	defer res.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("Unable to read response body from coveralls: %s", err)
+	}
+	if res.StatusCode != 200 {
+		return fmt.Errorf("Bad response status from coveralls: %d - %s", res.StatusCode, string(bodyBytes))
+	}
 	var response Response
-	if err = json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return err
+	if err = json.Unmarshal(bodyBytes, &response); err != nil {
+		return fmt.Errorf("Unable to unmarshal response JSON from coveralls: %s\n%s", err)
 	}
 	if response.Error {
 		return errors.New(response.Message)
