@@ -42,7 +42,7 @@ go:
 before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - go get golang.org/x/tools/cmd/cover
+  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 script:
     - $HOME/gopath/bin/goveralls -repotoken lAKAWPzcGsD3A8yBX3BGGtRUdJ6CaGERL
 ```
