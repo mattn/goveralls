@@ -33,7 +33,23 @@ test suite.
 
 ### GitHub Integration
 
-Enable Travis-CI on your github repository settings, and put below's `.travis.yml`.
+Enable Travis-CI on your github repository settings.
+
+For a **public** github repository put below's `.travis.yml`.
+
+```
+language: go
+go:
+  - tip
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+script:
+    - $HOME/gopath/bin/goveralls -service=travis-ci
+```
+
+For a **private** github repository put below's `.travis.yml`.
 
 ```
 language: go
@@ -83,4 +99,3 @@ For more information, See https://coveralls.io/docs/go
 # License
 
 under the MIT License: http://mattn.mit-license.org/2013
-
