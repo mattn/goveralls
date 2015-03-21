@@ -49,7 +49,7 @@ script:
     - $HOME/gopath/bin/goveralls -service=travis-ci
 ```
 
-For a **private** github repository put below's `.travis.yml`.
+For a **private** github repository put below's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
 
 ```
 language: go
