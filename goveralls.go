@@ -32,6 +32,7 @@ var (
 	race      = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
 	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
+	covermode = flag.String("covermode", "count", "sent as covermode argument to gocov if applicable")
 	repotoken = flag.String("repotoken", "", "Repository Token on coveralls")
 	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 )
