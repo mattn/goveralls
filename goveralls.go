@@ -35,6 +35,7 @@ var (
 	covermode = flag.String("covermode", "count", "sent as covermode argument to gocov if applicable")
 	repotoken = flag.String("repotoken", "", "Repository Token on coveralls")
 	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
+	shallow   = flag.Bool("shallow", false, "Shallow coveralls.io internal server errors")
 )
 
 // usage supplants package flag's Usage variable
@@ -162,8 +163,8 @@ func process() error {
 		return fmt.Errorf("Unable to read response body from coveralls: %s", err)
 	}
 
-	if res.StatusCode >= http.StatusInternalServerError {
-		fmt.Println("coverall.io failed internally")
+	if res.StatusCode >= http.StatusInternalServerError && shallow {
+		fmt.Println("coveralls.io failed internally")
 		return nil
 	}
 
