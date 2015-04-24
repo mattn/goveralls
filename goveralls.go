@@ -161,6 +161,12 @@ func process() error {
 	if err != nil {
 		return fmt.Errorf("Unable to read response body from coveralls: %s", err)
 	}
+
+	if res.StatusCode >= http.StatusInternalServerError {
+		fmt.Println("coverall.io failed internally")
+		return nil
+	}
+
 	if res.StatusCode != 200 {
 		return fmt.Errorf("Bad response status from coveralls: %d - %s", res.StatusCode, string(bodyBytes))
 	}
