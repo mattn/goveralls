@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -57,12 +58,13 @@ type SourceFile struct {
 
 // A Job represents the coverage data from a single run of a test suite.
 type Job struct {
-	RepoToken    *string       `json:"repo_token,omitempty"`
-	ServiceJobId string        `json:"service_job_id"`
-	ServiceName  string        `json:"service_name"`
-	SourceFiles  []*SourceFile `json:"source_files"`
-	Git          *Git          `json:"git,omitempty"`
-	RunAt        time.Time     `json:"run_at"`
+	RepoToken          *string       `json:"repo_token,omitempty"`
+	ServiceJobId       string        `json:"service_job_id"`
+	ServicePullRequest string        `json:"service_pull_request,omitempty"`
+	ServiceName        string        `json:"service_name"`
+	SourceFiles        []*SourceFile `json:"source_files"`
+	Git                *Git          `json:"git,omitempty"`
+	RunAt              time.Time     `json:"run_at"`
 }
 
 // A Response is returned by the Coveralls.io API.
@@ -129,21 +131,34 @@ func process() error {
 	//
 	// Initialize Job
 	//
-	jobId := os.Getenv("TRAVIS_JOB_ID")
-	if jobId == "" {
+	var jobId string
+	if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
+		jobId = travisJobId
+	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
+		jobId = circleCiJobId
+	} else {
 		jobId = uuid.New()
 	}
 	if *repotoken == "" {
 		repotoken = nil // remove the entry from json
 	}
+	var pullRequest string
+	if prNumber := os.Getenv("CIRCLE_PR_NUMBER"); prNumber != "" {
+		// for Circle CI (pull request from forked repo)
+		pullRequest = prNumber
+	} else if prURL := os.Getenv("CI_PULL_REQUEST"); prURL != "" {
+		// for Circle CI
+		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
+	}
 
 	j := Job{
-		RunAt:        time.Now(),
-		RepoToken:    repotoken,
-		ServiceJobId: jobId,
-		Git:          collectGitInfo(),
-		SourceFiles:  getCoverage(),
-		ServiceName:  *service,
+		RunAt:              time.Now(),
+		RepoToken:          repotoken,
+		ServiceJobId:       jobId,
+		ServicePullRequest: pullRequest,
+		Git:                collectGitInfo(),
+		SourceFiles:        getCoverage(),
+		ServiceName:        *service,
 	}
 
 	b, err := json.Marshal(j)
