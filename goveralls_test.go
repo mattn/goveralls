@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 )
 
 func myImportPath() string {
