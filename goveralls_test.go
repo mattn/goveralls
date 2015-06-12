@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 )
 
 func myImportPath() string {
 	cmd := exec.Command("go", "list")
 	b, err := cmd.CombinedOutput()
-	if err == nil {
+	if err != nil {
 		panic(err)
 	}
 	return strings.TrimSpace(string(b))
