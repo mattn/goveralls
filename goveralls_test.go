@@ -13,7 +13,7 @@ import (
 func myImportPath() string {
 	cmd := exec.Command("go", "list")
 	b, err := cmd.CombinedOutput()
-	if err == nil {
+	if err != nil {
 		panic(err)
 	}
 	return strings.TrimSpace(string(b))
