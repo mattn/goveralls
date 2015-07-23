@@ -94,6 +94,24 @@ You can use the `-v` flag to see verbose output from the test suite:
 $ goveralls -v -service drone.io -repotoken $COVERALLS_TOKEN
 ```
 
+## CircleCI
+
+Store your Coveralls API token as an [Environment Variable](https://circleci.com/docs/environment-variables).
+
+In your `circle.yml` add the following commands under the `test` section.
+
+```yml
+test:
+  pre:
+    - go get github.com/axw/gocov/gocov
+    - go get github.com/mattn/goveralls
+    - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  override:
+    - go test -v -cover -race -coverprofile=/home/ubuntu/coverage.out
+  post:
+    - /home/ubuntu/bin/goveralls -coverprofile=/home/ubuntu/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
+```
+
 For more information, See https://coveralls.io/docs/go
 
 # License
