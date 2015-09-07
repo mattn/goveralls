@@ -30,7 +30,6 @@ import (
 var (
 	pkg       = flag.String("package", "", "Go package")
 	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'go test'")
-	race      = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
 	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
 	covermode = flag.String("covermode", "count", "sent as covermode argument to gocov if applicable")
