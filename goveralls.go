@@ -33,7 +33,7 @@ var (
 	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
 	covermode = flag.String("covermode", "count", "sent as covermode argument to gocov if applicable")
-	repotoken = flag.String("repotoken", "", "Repository Token on coveralls")
+	repotoken = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls; defaults to $COVERALLS_TOKEN if set")
 	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 	shallow   = flag.Bool("shallow", false, "Shallow coveralls.io internal server errors")
 )

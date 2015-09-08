@@ -24,6 +24,9 @@ $ cd $GOPATH/src/github.com/yourusername/yourpackage
 $ goveralls -repotoken your_repos_coveralls_token
 ```
 
+You can set the environment variable `$COVERALLS_TOKEN` to your token so you do
+not have to specify it at each invocation.
+
 # Continuous Integration
 
 There is no need to run `go test` separately, as `goveralls` runs the entire
@@ -60,8 +63,15 @@ before_install:
   - go get github.com/mattn/goveralls
   - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 script:
-    - $HOME/gopath/bin/goveralls -repotoken lAKAWPzcGsD3A8yBX3BGGtRUdJ6CaGERL
+    - $HOME/gopath/bin/goveralls
 ```
+
+Store your Coveralls API token in `Environment variables`.
+
+```
+COVERALLS_TOKEN = your_token_goes_here
+```
+
 
 ### For others:
 
@@ -74,7 +84,7 @@ $ goveralls -coverprofile=profile.cov -service=travis-ci
 
 ## Drone.io
 
-Store your Coveralls API token in `Enviornment Variables`:
+Store your Coveralls API token in `Environment Variables`:
 
 ```
 COVERALLS_TOKEN=your_token_goes_here
@@ -85,13 +95,16 @@ Replace the `go test` line in your `Commands` with these lines:
 ```
 $ go get github.com/axw/gocov/gocov
 $ go get github.com/mattn/goveralls
-$ goveralls -service drone.io -repotoken $COVERALLS_TOKEN
+$ goveralls -service drone.io
 ```
+
+`goveralls` automatically use the environment variable `COVERALLS_TOKEN` as the
+default value for `-repotoken`.
 
 You can use the `-v` flag to see verbose output from the test suite:
 
 ```
-$ goveralls -v -service drone.io -repotoken $COVERALLS_TOKEN
+$ goveralls -v -service drone.io
 ```
 
 ## CircleCI
