@@ -34,8 +34,9 @@ var (
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
 	covermode = flag.String("covermode", "count", "sent as covermode argument to gocov if applicable")
 	repotoken = flag.String("repotoken", "", "Repository Token on coveralls")
+	endpoint  = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
-	shallow   = flag.Bool("shallow", false, "Shallow coveralls.io internal server errors")
+	shallow   = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
 )
 
 // usage supplants package flag's Usage variable
@@ -167,7 +168,7 @@ func process() error {
 
 	params := make(url.Values)
 	params.Set("json", string(b))
-	res, err := http.PostForm("https://coveralls.io/api/v1/jobs", params)
+	res, err := http.PostForm(*endpoint+"/api/v1/jobs", params)
 	if err != nil {
 		return err
 	}
@@ -178,7 +179,7 @@ func process() error {
 	}
 
 	if res.StatusCode >= http.StatusInternalServerError && *shallow {
-		fmt.Println("coveralls.io failed internally")
+		fmt.Println("coveralls server failed internally")
 		return nil
 	}
 
