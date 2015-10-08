@@ -146,6 +146,8 @@ func process() error {
 	if prNumber := os.Getenv("CIRCLE_PR_NUMBER"); prNumber != "" {
 		// for Circle CI (pull request from forked repo)
 		pullRequest = prNumber
+	} else if prNumber := os.Getenv("TRAVIS_PULL_REQUEST"); prNumber != "" && prNumber != "false" {
+		pullRequest = prNumber
 	} else if prURL := os.Getenv("CI_PULL_REQUEST"); prURL != "" {
 		// for Circle CI
 		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
