@@ -6,6 +6,7 @@
 package main
 
 import (
+	_ "crypto/sha512"
 	"encoding/json"
 	"errors"
 	"flag"
