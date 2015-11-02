@@ -69,7 +69,7 @@ func prepareTest(t *testing.T) (tmpPath string) {
 	tmp = filepath.Join(tmp, uuid.New())
 	os.Setenv("GOPATH", tmp)
 	path := os.Getenv("PATH")
-	path = tmp + "/bin:" + path
+	path = tmp + "/bin" + string(filepath.ListSeparator) + path
 	os.Setenv("PATH", path)
 	runCmd(t, "go", "get", myImportPath())
 	return tmp
