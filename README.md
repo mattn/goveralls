@@ -44,7 +44,7 @@ go:
 before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 script:
     - $HOME/gopath/bin/goveralls -service=travis-ci
 ```
@@ -58,7 +58,7 @@ go:
 before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 script:
     - $HOME/gopath/bin/goveralls -repotoken lAKAWPzcGsD3A8yBX3BGGtRUdJ6CaGERL
 ```
@@ -105,7 +105,7 @@ test:
   pre:
     - go get github.com/axw/gocov/gocov
     - go get github.com/mattn/goveralls
-    - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+    - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
   override:
     - go test -v -cover -race -coverprofile=/home/ubuntu/coverage.out
   post:
