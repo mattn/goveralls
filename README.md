@@ -42,6 +42,7 @@ For a **public** github repository put below's `.travis.yml`.
 
 ```
 language: go
+sudo: false
 go:
   - tip
 before_install:
@@ -56,6 +57,7 @@ For a **private** github repository put below's `.travis.yml`. If you use **trav
 
 ```
 language: go
+sudo: false
 go:
   - tip
 before_install:
