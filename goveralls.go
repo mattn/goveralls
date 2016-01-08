@@ -38,6 +38,7 @@ var (
 	endpoint  = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 	shallow   = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
+	ignore    = flag.String("ignore", "", "Comma separated files to ignore")
 )
 
 // usage supplants package flag's Usage variable
@@ -162,6 +163,27 @@ func process() error {
 		Git:                collectGitInfo(),
 		SourceFiles:        getCoverage(),
 		ServiceName:        *service,
+	}
+
+	// Ignore files
+	if len(*ignore) > 0 {
+		patterns := strings.Split(*ignore, ",")
+		var files []*SourceFile
+	Files:
+		for _, file := range j.SourceFiles {
+			for _, pattern := range patterns {
+				match, err := filepath.Match(pattern, file.Name)
+				if err != nil {
+					return err
+				}
+				if match {
+					fmt.Printf("ignoring %s\n", file.Name)
+					continue Files
+				}
+			}
+			files = append(files, file)
+		}
+		j.SourceFiles = files
 	}
 
 	b, err := json.Marshal(j)
