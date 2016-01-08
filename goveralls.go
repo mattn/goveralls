@@ -168,6 +168,9 @@ func process() error {
 	// Ignore files
 	if len(*ignore) > 0 {
 		patterns := strings.Split(*ignore, ",")
+		for i, pattern := range patterns {
+			patterns[i] = strings.TrimSpace(pattern)
+		}
 		var files []*SourceFile
 	Files:
 		for _, file := range j.SourceFiles {
