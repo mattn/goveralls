@@ -50,7 +50,7 @@ before_install:
   - go get github.com/mattn/goveralls
   - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 script:
-    - $HOME/gopath/bin/goveralls -service=travis-ci
+  - $HOME/gopath/bin/goveralls -service=travis-ci
 ```
 
 For a **private** github repository put below's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
@@ -65,7 +65,7 @@ before_install:
   - go get github.com/mattn/goveralls
   - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 script:
-    - $HOME/gopath/bin/goveralls
+  - $HOME/gopath/bin/goveralls
 ```
 
 Store your Coveralls API token in `Environment variables`.
@@ -74,6 +74,20 @@ Store your Coveralls API token in `Environment variables`.
 COVERALLS_TOKEN = your_token_goes_here
 ```
 
+or you can store token using [travis encryption keys](https://docs.travis-ci.com/user/encryption-keys/).
+
+```
+$ gem install travis
+$ travis encrypt COVERALLS_TOKEN=your_token_goes_here --add env.global
+```
+
+travis will add `env` block as following example:
+
+```
+env:
+  global:
+    secure: xxxxxxxxxxxxx
+```
 
 ### For others:
 
