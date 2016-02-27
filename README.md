@@ -141,7 +141,7 @@ test:
     - /home/ubuntu/bin/goveralls -coverprofile=/home/ubuntu/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
 ```
 
-For more information, See https://coveralls.io/docs/go
+For more information, See https://coveralls.zendesk.com/hc/en-us/articles/201342809-Go
 
 # License
 
