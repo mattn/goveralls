@@ -137,7 +137,8 @@ func parseCover(fn string) []*SourceFile {
 
 		for _, block := range prof.Blocks {
 			for i := block.StartLine; i <= block.EndLine; i++ {
-				sf.Coverage[i-1] = block.Count
+				count, _ := sf.Coverage[i-1].(int)
+				sf.Coverage[i-1] = count + block.Count
 			}
 		}
 
