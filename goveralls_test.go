@@ -30,8 +30,7 @@ func TestGoveralls(t *testing.T) {
 	os.Chdir(tmp)
 	defer func() {
 		os.Chdir(wd)
-		//os.RemoveAll(tmp)
-		println(tmp)
+		os.RemoveAll(tmp)
 	}()
 	runCmd(t, "go", "get", "github.com/mattn/goveralls/tester")
 	b := runCmd(t, "goveralls", "-package=github.com/mattn/goveralls/tester")
