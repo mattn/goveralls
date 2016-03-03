@@ -28,10 +28,10 @@ func findFile(file string) (string, error) {
 	return filepath.Join(pkg.Dir, file), nil
 }
 
-func parseCover(fn string) []*SourceFile {
+func parseCover(fn string) ([]*SourceFile, error) {
 	profs, err := cover.ParseProfiles(fn)
 	if err != nil {
-		log.Fatalf("Error parsing coverage: %v", err)
+		return nil, fmt.Errorf("Error parsing coverage: %v", err)
 	}
 
 	var rv []*SourceFile
@@ -59,5 +59,5 @@ func parseCover(fn string) []*SourceFile {
 		rv = append(rv, sf)
 	}
 
-	return rv
+	return rv, nil
 }

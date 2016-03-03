@@ -36,14 +36,14 @@ type Git struct {
 // collectGitInfo runs several git commands to compose a Git object.
 func collectGitInfo() *Git {
 	gitCmds := map[string][]string{
-		"id":      {"git", "rev-parse", "HEAD"},
-		"branch":  {"git", "rev-parse", "--abbrev-ref", "HEAD"},
-		"aname":   {"git", "log", "-1", "--pretty=%aN"},
-		"aemail":  {"git", "log", "-1", "--pretty=%aE"},
-		"cname":   {"git", "log", "-1", "--pretty=%cN"},
-		"cemail":  {"git", "log", "-1", "--pretty=%cE"},
-		"message": {"git", "log", "-1", "--pretty=%s"},
-		"remotes": {"git", "remote", "-v"},
+		"id":      {"rev-parse", "HEAD"},
+		"branch":  {"rev-parse", "--abbrev-ref", "HEAD"},
+		"aname":   {"log", "-1", "--pretty=%aN"},
+		"aemail":  {"log", "-1", "--pretty=%aE"},
+		"cname":   {"log", "-1", "--pretty=%cN"},
+		"cemail":  {"log", "-1", "--pretty=%cE"},
+		"message": {"log", "-1", "--pretty=%s"},
+		"remotes": {"remote", "-v"},
 	}
 	results := map[string]string{}
 	remotes := map[string]Remote{}
@@ -59,13 +59,13 @@ func collectGitInfo() *Git {
 			}
 		}
 
-		cmd := exec.Cmd{}
-		cmd.Path = gitPath
-		cmd.Args = args
-		cmd.Stderr = os.Stderr
-		ret, err := cmd.Output()
+		cmd := exec.Command(gitPath, args...)
+		ret, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Fatal(err)
+			if strings.Contains(string(ret), `Not a git repository`) {
+				return nil
+			}
+			log.Fatalf("%v: %v", err, string(ret))
 		}
 		s := string(ret)
 		s = strings.TrimRight(s, "\n")

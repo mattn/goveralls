@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -31,9 +32,8 @@ import (
 var (
 	pkg       = flag.String("package", "", "Go package")
 	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'go test'")
-	gocovjson = flag.String("gocovdata", "", "If supplied, use existing gocov.json")
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
-	covermode = flag.String("covermode", "count", "sent as covermode argument to gocov if applicable")
+	covermode = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
 	endpoint  = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
@@ -76,12 +76,33 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
-func getCoverage() []*SourceFile {
+func getCoverage() ([]*SourceFile, error) {
 	if *coverprof != "" {
 		return parseCover(*coverprof)
-	} else {
-		return getCoverageGocov()
 	}
+
+	f, err := ioutil.TempFile("", "goveralls")
+	if err != nil {
+		return nil, err
+	}
+	f.Close()
+	defer os.Remove(f.Name())
+
+	cmd := exec.Command("go")
+	args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name()}
+	if *verbose {
+		args = append(args, "-v")
+	}
+	args = append(args, flag.Args()...)
+	if *pkg != "" {
+		args = append(args, *pkg)
+	}
+	cmd.Args = args
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("%v: %v", err, string(b))
+	}
+	return parseCover(f.Name())
 }
 
 var vscDirs = []string{".git", ".hg", ".bzr", ".svn"}
@@ -155,13 +176,18 @@ func process() error {
 		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
 	}
 
+	sourceFiles, err := getCoverage()
+	if err != nil {
+		return err
+	}
+
 	j := Job{
 		RunAt:              time.Now(),
 		RepoToken:          repotoken,
 		ServiceJobId:       jobId,
 		ServicePullRequest: pullRequest,
 		Git:                collectGitInfo(),
-		SourceFiles:        getCoverage(),
+		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
 	}
 
@@ -192,6 +218,13 @@ func process() error {
 	b, err := json.Marshal(j)
 	if err != nil {
 		return err
+	}
+
+	fmt.Println(string(b))
+	fmt.Println(repotoken)
+	if repotoken == nil {
+		fmt.Println(string(b))
+		return nil
 	}
 
 	params := make(url.Values)
