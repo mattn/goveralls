@@ -220,8 +220,6 @@ func process() error {
 		return err
 	}
 
-	fmt.Println(string(b))
-	fmt.Println(repotoken)
 	if repotoken == nil {
 		fmt.Println(string(b))
 		return nil
