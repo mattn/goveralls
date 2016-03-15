@@ -46,9 +46,8 @@ sudo: false
 go:
   - tip
 before_install:
-  - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  - go get golang.org/x/tools/cmd/cover
 script:
   - $HOME/gopath/bin/goveralls -service=travis-ci
 ```
@@ -61,9 +60,8 @@ sudo: false
 go:
   - tip
 before_install:
-  - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  - go get golang.org/x/tools/cmd/cover
 script:
   - $HOME/gopath/bin/goveralls
 ```
@@ -109,8 +107,8 @@ COVERALLS_TOKEN=your_token_goes_here
 Replace the `go test` line in your `Commands` with these lines:
 
 ```
-$ go get github.com/axw/gocov/gocov
 $ go get github.com/mattn/goveralls
+$ go get golang.org/x/tools/cmd/cover
 $ goveralls -service drone.io
 ```
 
@@ -132,9 +130,8 @@ In your `circle.yml` add the following commands under the `test` section.
 ```yml
 test:
   pre:
-    - go get github.com/axw/gocov/gocov
     - go get github.com/mattn/goveralls
-    - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+	- go get golang.org/x/tools/cmd/cover
   override:
     - go test -v -cover -race -coverprofile=/home/ubuntu/coverage.out
   post:
