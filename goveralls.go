@@ -220,11 +220,6 @@ func process() error {
 		return err
 	}
 
-	if repotoken == nil {
-		fmt.Println(string(b))
-		return nil
-	}
-
 	params := make(url.Values)
 	params.Set("json", string(b))
 	res, err := http.PostForm(*endpoint+"/api/v1/jobs", params)
