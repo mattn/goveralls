@@ -63,7 +63,7 @@ before_install:
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
 script:
-  - $HOME/gopath/bin/goveralls
+  - $HOME/gopath/bin/goveralls -service=travis-pro
 ```
 
 Store your Coveralls API token in `Environment variables`.
