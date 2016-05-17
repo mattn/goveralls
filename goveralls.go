@@ -76,33 +76,57 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
+func getList() ([]string, error) {
+	out, err := exec.Command("go", "list", "./...").CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+	return strings.Split(string(out), "\n"), nil
+}
+
 func getCoverage() ([]*SourceFile, error) {
 	if *coverprof != "" {
 		return parseCover(*coverprof)
 	}
 
-	f, err := ioutil.TempFile("", "goveralls")
+	var sourceFiles []*SourceFile
+	lines, err := getList()
 	if err != nil {
 		return nil, err
 	}
-	f.Close()
-	defer os.Remove(f.Name())
+	for _, line := range lines {
+		f, err := ioutil.TempFile("", "goveralls")
+		if err != nil {
+			return nil, err
+		}
+		f.Close()
 
-	cmd := exec.Command("go")
-	args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name()}
-	if *verbose {
-		args = append(args, "-v")
+		cmd := exec.Command("go")
+		args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name()}
+		if *verbose {
+			args = append(args, "-v")
+		}
+		args = append(args, line)
+		args = append(args, flag.Args()...)
+		if *pkg != "" {
+			args = append(args, *pkg)
+		}
+		cmd.Args = args
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return nil, fmt.Errorf("%v: %v", err, string(b))
+		}
+		sf, err := parseCover(f.Name())
+		if err != nil {
+			return nil, err
+		}
+		err = os.Remove(f.Name())
+		if err != nil {
+			return nil, err
+		}
+		sourceFiles = append(sourceFiles, sf...)
 	}
-	args = append(args, flag.Args()...)
-	if *pkg != "" {
-		args = append(args, *pkg)
-	}
-	cmd.Args = args
-	b, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %v", err, string(b))
-	}
-	return parseCover(f.Name())
+	return sourceFiles, nil
 }
 
 var vscDirs = []string{".git", ".hg", ".bzr", ".svn"}
