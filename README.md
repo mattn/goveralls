@@ -135,7 +135,7 @@ test:
   override:
     - go test -v -cover -race -coverprofile=/home/ubuntu/coverage.out
   post:
-    - /home/ubuntu/bin/goveralls -coverprofile=/home/ubuntu/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
+    - /home/ubuntu/.go_workspace/bin/goveralls -coverprofile=/home/ubuntu/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
 ```
 
 For more information, See https://coveralls.zendesk.com/hc/en-us/articles/201342809-Go
