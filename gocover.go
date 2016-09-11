@@ -31,6 +31,13 @@ func findFile(file string) (string, error) {
 // mergeProfs merges profiles for same target packages.
 // It assumes each profiles have same sorted FileName and Blocks.
 func mergeProfs(pfss [][]*cover.Profile) []*cover.Profile {
+	// skip empty profiles ([no test files])
+	for i := 0; i < len(pfss); i++ {
+		if len(pfss[i]) > 0 {
+			pfss = pfss[i:]
+			break
+		}
+	}
 	if len(pfss) < 1 {
 		return nil
 	} else if len(pfss) == 1 {
