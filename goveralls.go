@@ -78,12 +78,21 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
-func getList() ([]string, error) {
+// getPkgs returns packages for mesuring coverage. Returned packages doesn't
+// contain vendor packages.
+func getPkgs() ([]string, error) {
 	out, err := exec.Command("go", "list", "./...").CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(strings.Trim(string(out), "\n"), "\n"), nil
+	allPkgs := strings.Split(strings.Trim(string(out), "\n"), "\n")
+	pkgs := make([]string, 0, len(allPkgs))
+	for _, p := range allPkgs {
+		if !strings.Contains(p, "/vendor/") {
+			pkgs = append(pkgs, p)
+		}
+	}
+	return pkgs, nil
 }
 
 func getCoverage() ([]*SourceFile, error) {
@@ -91,12 +100,13 @@ func getCoverage() ([]*SourceFile, error) {
 		return parseCover(*coverprof)
 	}
 
-	lines, err := getList()
+	pkgs, err := getPkgs()
 	if err != nil {
 		return nil, err
 	}
+	coverpkg := fmt.Sprintf("-coverpkg=%s", strings.Join(pkgs, ","))
 	var pfss [][]*cover.Profile
-	for _, line := range lines {
+	for _, line := range pkgs {
 		f, err := ioutil.TempFile("", "goveralls")
 		if err != nil {
 			return nil, err
@@ -104,7 +114,7 @@ func getCoverage() ([]*SourceFile, error) {
 		f.Close()
 
 		cmd := exec.Command("go")
-		args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name(), "-coverpkg=./..."}
+		args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name(), coverpkg}
 		if *verbose {
 			args = append(args, "-v")
 		}
