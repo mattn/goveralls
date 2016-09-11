@@ -40,7 +40,10 @@ func mergeProfs(pfss [][]*cover.Profile) []*cover.Profile {
 	ret := make([]*cover.Profile, 0, len(head))
 	for i, profile := range head {
 		for _, ps := range rest {
-			if len(ps) < i+1 {
+			if len(ps) < 1 {
+				// no test files
+				continue
+			} else if len(ps) < i+1 {
 				log.Fatal("Profile length is different")
 			}
 			if ps[i].FileName != profile.FileName {
