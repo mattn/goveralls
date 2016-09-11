@@ -83,7 +83,7 @@ func getList() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(string(out), "\n"), nil
+	return strings.Split(strings.Trim(string(out), "\n"), "\n"), nil
 }
 
 func getCoverage() ([]*SourceFile, error) {
