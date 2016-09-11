@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/tools/cover"
+
 	"github.com/pborman/uuid"
 )
 
@@ -89,11 +91,11 @@ func getCoverage() ([]*SourceFile, error) {
 		return parseCover(*coverprof)
 	}
 
-	var sourceFiles []*SourceFile
 	lines, err := getList()
 	if err != nil {
 		return nil, err
 	}
+	var pfss [][]*cover.Profile
 	for _, line := range lines {
 		f, err := ioutil.TempFile("", "goveralls")
 		if err != nil {
@@ -102,7 +104,7 @@ func getCoverage() ([]*SourceFile, error) {
 		f.Close()
 
 		cmd := exec.Command("go")
-		args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name()}
+		args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name(), "-coverpkg=./..."}
 		if *verbose {
 			args = append(args, "-v")
 		}
@@ -116,7 +118,7 @@ func getCoverage() ([]*SourceFile, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%v: %v", err, string(b))
 		}
-		sf, err := parseCover(f.Name())
+		pfs, err := cover.ParseProfiles(f.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -124,8 +126,14 @@ func getCoverage() ([]*SourceFile, error) {
 		if err != nil {
 			return nil, err
 		}
-		sourceFiles = append(sourceFiles, sf...)
+		pfss = append(pfss, pfs)
 	}
+
+	sourceFiles, err := toSF(mergeProfs(pfss))
+	if err != nil {
+		return nil, err
+	}
+
 	return sourceFiles, nil
 }
 
