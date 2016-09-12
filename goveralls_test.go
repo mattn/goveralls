@@ -24,6 +24,20 @@ func TestUsage(t *testing.T) {
 	}
 }
 
+func TestInvalidArg(t *testing.T) {
+	tmp := prepareTest(t)
+	defer os.RemoveAll(tmp)
+	cmd := exec.Command("goveralls", "pkg")
+	b, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("Expected exit code 1 bot 0")
+	}
+	s := strings.Split(string(b), "\n")[0]
+	if !strings.HasPrefix(s, "Usage: goveralls ") {
+		t.Fatalf("Expected %v, but %v", "Usage: ", s)
+	}
+}
+
 func TestGoveralls(t *testing.T) {
 	wd, _ := os.Getwd()
 	tmp := prepareTest(t)
@@ -44,8 +58,7 @@ func TestGoveralls(t *testing.T) {
 func prepareTest(t *testing.T) (tmpPath string) {
 	tmp := os.TempDir()
 	tmp = filepath.Join(tmp, uuid.New())
-	os.Setenv("GOPATH", tmp)
-	runCmd(t, "go", "get", "github.com/mattn/goveralls")
+	runCmd(t, "go", "build", "-o", filepath.Join(tmp, "bin", "goveralls"), "github.com/mattn/goveralls")
 	os.Setenv("PATH", filepath.Join(tmp, "bin")+string(filepath.ListSeparator)+os.Getenv("PATH"))
 	os.MkdirAll(filepath.Join(tmp, "src"), 0755)
 	return tmp

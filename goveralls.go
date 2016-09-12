@@ -47,7 +47,7 @@ var (
 var usage = func() {
 	cmd := os.Args[0]
 	// fmt.Fprintf(os.Stderr, "Usage of %s:\n", cmd)
-	s := "Usage: %s [options] TOKEN\n"
+	s := "Usage: %s [options]\n"
 	fmt.Fprintf(os.Stderr, s, cmd)
 	flag.PrintDefaults()
 }
@@ -123,7 +123,6 @@ func getCoverage() ([]*SourceFile, error) {
 			args = append(args, "-v")
 		}
 		args = append(args, line)
-		args = append(args, flag.Args()...)
 		cmd.Args = args
 		b, err := cmd.CombinedOutput()
 		if err != nil {
@@ -179,6 +178,10 @@ func process() error {
 	//
 	flag.Usage = usage
 	flag.Parse()
+	if len(flag.Args()) > 0 {
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	//
 	// Setup PATH environment variable
