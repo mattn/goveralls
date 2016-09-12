@@ -38,7 +38,7 @@ func mergeProfs(pfss [][]*cover.Profile) []*cover.Profile {
 			break
 		}
 	}
-	if len(pfss) < 1 {
+	if len(pfss) == 0 {
 		return nil
 	} else if len(pfss) == 1 {
 		return pfss[0]
@@ -47,7 +47,7 @@ func mergeProfs(pfss [][]*cover.Profile) []*cover.Profile {
 	ret := make([]*cover.Profile, 0, len(head))
 	for i, profile := range head {
 		for _, ps := range rest {
-			if len(ps) < 1 {
+			if len(ps) == 0 {
 				// no test files
 				continue
 			} else if len(ps) < i+1 {
