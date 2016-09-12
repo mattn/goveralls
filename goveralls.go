@@ -80,8 +80,11 @@ type Response struct {
 
 // getPkgs returns packages for mesuring coverage. Returned packages doesn't
 // contain vendor packages.
-func getPkgs() ([]string, error) {
-	out, err := exec.Command("go", "list", "./...").CombinedOutput()
+func getPkgs(pkg string) ([]string, error) {
+	if pkg == "" {
+		pkg = "./..."
+	}
+	out, err := exec.Command("go", "list", pkg).CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +103,8 @@ func getCoverage() ([]*SourceFile, error) {
 		return parseCover(*coverprof)
 	}
 
-	pkgs, err := getPkgs()
+	// pkgs is packages to run tests and get coverage.
+	pkgs, err := getPkgs(*pkg)
 	if err != nil {
 		return nil, err
 	}
@@ -120,9 +124,6 @@ func getCoverage() ([]*SourceFile, error) {
 		}
 		args = append(args, line)
 		args = append(args, flag.Args()...)
-		if *pkg != "" {
-			args = append(args, *pkg)
-		}
 		cmd.Args = args
 		b, err := cmd.CombinedOutput()
 		if err != nil {
