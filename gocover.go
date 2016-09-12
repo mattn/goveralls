@@ -28,12 +28,61 @@ func findFile(file string) (string, error) {
 	return filepath.Join(pkg.Dir, file), nil
 }
 
-func parseCover(fn string) ([]*SourceFile, error) {
-	profs, err := cover.ParseProfiles(fn)
-	if err != nil {
-		return nil, fmt.Errorf("Error parsing coverage: %v", err)
+// mergeProfs merges profiles for same target packages.
+// It assumes each profiles have same sorted FileName and Blocks.
+func mergeProfs(pfss [][]*cover.Profile) []*cover.Profile {
+	// skip empty profiles ([no test files])
+	for i := 0; i < len(pfss); i++ {
+		if len(pfss[i]) > 0 {
+			pfss = pfss[i:]
+			break
+		}
 	}
+	if len(pfss) == 0 {
+		return nil
+	} else if len(pfss) == 1 {
+		return pfss[0]
+	}
+	head, rest := pfss[0], pfss[1:]
+	ret := make([]*cover.Profile, 0, len(head))
+	for i, profile := range head {
+		for _, ps := range rest {
+			if len(ps) == 0 {
+				// no test files
+				continue
+			} else if len(ps) < i+1 {
+				log.Fatal("Profile length is different")
+			}
+			if ps[i].FileName != profile.FileName {
+				log.Fatal("Profile FileName is different")
+			}
+			profile.Blocks = mergeProfBlocks(profile.Blocks, ps[i].Blocks)
+		}
+		ret = append(ret, profile)
+	}
+	return ret
+}
 
+func mergeProfBlocks(as, bs []cover.ProfileBlock) []cover.ProfileBlock {
+	if len(as) != len(bs) {
+		log.Fatal("Two block length should be same")
+	}
+	// cover.ProfileBlock genereated by cover.ParseProfiles() is sorted by
+	// StartLine and StartCol, so we can use index.
+	ret := make([]cover.ProfileBlock, 0, len(as))
+	for i, a := range as {
+		b := bs[i]
+		if a.StartLine != b.StartLine || a.StartCol != b.StartCol {
+			log.Fatal("Blocks are not sorted")
+		}
+		a.Count += b.Count
+		ret = append(ret, a)
+	}
+	return ret
+}
+
+// toSF converts profiles to sourcefiles for coveralls.
+func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 	var rv []*SourceFile
 	for _, prof := range profs {
 		path, err := findFile(prof.FileName)
@@ -61,4 +110,12 @@ func parseCover(fn string) ([]*SourceFile, error) {
 	}
 
 	return rv, nil
+}
+
+func parseCover(fn string) ([]*SourceFile, error) {
+	profs, err := cover.ParseProfiles(fn)
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing coverage: %v", err)
+	}
+	return toSF(profs)
 }

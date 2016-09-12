@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/tools/cover"
+
 	"github.com/pborman/uuid"
 )
 
@@ -45,7 +47,7 @@ var (
 var usage = func() {
 	cmd := os.Args[0]
 	// fmt.Fprintf(os.Stderr, "Usage of %s:\n", cmd)
-	s := "Usage: %s [options] TOKEN\n"
+	s := "Usage: %s [options]\n"
 	fmt.Fprintf(os.Stderr, s, cmd)
 	flag.PrintDefaults()
 }
@@ -76,33 +78,73 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
+// getPkgs returns packages for mesuring coverage. Returned packages doesn't
+// contain vendor packages.
+func getPkgs(pkg string) ([]string, error) {
+	if pkg == "" {
+		pkg = "./..."
+	}
+	out, err := exec.Command("go", "list", pkg).CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+	allPkgs := strings.Split(strings.Trim(string(out), "\n"), "\n")
+	pkgs := make([]string, 0, len(allPkgs))
+	for _, p := range allPkgs {
+		if !strings.Contains(p, "/vendor/") {
+			pkgs = append(pkgs, p)
+		}
+	}
+	return pkgs, nil
+}
+
 func getCoverage() ([]*SourceFile, error) {
 	if *coverprof != "" {
 		return parseCover(*coverprof)
 	}
 
-	f, err := ioutil.TempFile("", "goveralls")
+	// pkgs is packages to run tests and get coverage.
+	pkgs, err := getPkgs(*pkg)
 	if err != nil {
 		return nil, err
 	}
-	f.Close()
-	defer os.Remove(f.Name())
+	coverpkg := fmt.Sprintf("-coverpkg=%s", strings.Join(pkgs, ","))
+	var pfss [][]*cover.Profile
+	for _, line := range pkgs {
+		f, err := ioutil.TempFile("", "goveralls")
+		if err != nil {
+			return nil, err
+		}
+		f.Close()
 
-	cmd := exec.Command("go")
-	args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name()}
-	if *verbose {
-		args = append(args, "-v")
+		cmd := exec.Command("go")
+		args := []string{"go", "test", "-covermode", *covermode, "-coverprofile", f.Name(), coverpkg}
+		if *verbose {
+			args = append(args, "-v")
+		}
+		args = append(args, line)
+		cmd.Args = args
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return nil, fmt.Errorf("%v: %v", err, string(b))
+		}
+		pfs, err := cover.ParseProfiles(f.Name())
+		if err != nil {
+			return nil, err
+		}
+		err = os.Remove(f.Name())
+		if err != nil {
+			return nil, err
+		}
+		pfss = append(pfss, pfs)
 	}
-	args = append(args, flag.Args()...)
-	if *pkg != "" {
-		args = append(args, *pkg)
-	}
-	cmd.Args = args
-	b, err := cmd.CombinedOutput()
+
+	sourceFiles, err := toSF(mergeProfs(pfss))
 	if err != nil {
-		return nil, fmt.Errorf("%v: %v", err, string(b))
+		return nil, err
 	}
-	return parseCover(f.Name())
+
+	return sourceFiles, nil
 }
 
 var vscDirs = []string{".git", ".hg", ".bzr", ".svn"}
@@ -136,6 +178,10 @@ func process() error {
 	//
 	flag.Usage = usage
 	flag.Parse()
+	if len(flag.Args()) > 0 {
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	//
 	// Setup PATH environment variable
