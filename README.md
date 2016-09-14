@@ -47,7 +47,6 @@ go:
   - tip
 before_install:
   - go get github.com/mattn/goveralls
-  - go get golang.org/x/tools/cmd/cover
 script:
   - $HOME/gopath/bin/goveralls -service=travis-ci
 ```
@@ -61,7 +60,6 @@ go:
   - tip
 before_install:
   - go get github.com/mattn/goveralls
-  - go get golang.org/x/tools/cmd/cover
 script:
   - $HOME/gopath/bin/goveralls -service=travis-pro
 ```
@@ -90,7 +88,6 @@ env:
 ### For others:
 
 ```
-$ go get golang.org/x/tools/cmd/cover
 $ go get github.com/mattn/goveralls
 $ go test -covermode=count -coverprofile=profile.cov
 $ goveralls -coverprofile=profile.cov -service=travis-ci
@@ -108,7 +105,6 @@ Replace the `go test` line in your `Commands` with these lines:
 
 ```
 $ go get github.com/mattn/goveralls
-$ go get golang.org/x/tools/cmd/cover
 $ goveralls -service drone.io
 ```
 
@@ -131,7 +127,6 @@ In your `circle.yml` add the following commands under the `test` section.
 test:
   pre:
     - go get github.com/mattn/goveralls
-	- go get golang.org/x/tools/cmd/cover
   override:
     - go test -v -cover -race -coverprofile=/home/ubuntu/coverage.out
   post:
