@@ -135,6 +135,11 @@ test:
 
 For more information, See https://coveralls.zendesk.com/hc/en-us/articles/201342809-Go
 
+# Authors
+
+* Yasuhiro Matsumoto (a.k.a. mattn)
+* haya14busa
+
 # License
 
-under the MIT License: http://mattn.mit-license.org/2013
+under the MIT License: http://mattn.mit-license.org/2016
