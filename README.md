@@ -51,6 +51,8 @@ script:
   - $HOME/gopath/bin/goveralls -service=travis-ci
 ```
 
+For a **public** github repository, it is not necessary to define your repository key (`COVERALLS_TOKEN`).
+
 For a **private** github repository put below's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
 
 ```
@@ -70,7 +72,7 @@ Store your Coveralls API token in `Environment variables`.
 COVERALLS_TOKEN = your_token_goes_here
 ```
 
-or you can store token using [travis encryption keys](https://docs.travis-ci.com/user/encryption-keys/).
+or you can store token using [travis encryption keys](https://docs.travis-ci.com/user/encryption-keys/). Note that this is the token provided in the page for that specific repository on Coveralls. This is *not* one that was created from the "Personal API Tokens" area under your Coveralls account settings.
 
 ```
 $ gem install travis
