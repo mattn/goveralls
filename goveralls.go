@@ -37,6 +37,7 @@ var (
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
 	covermode = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	parallel  = flag.String("parallel", os.Getenv("COVERALLS_PARALLEL"), "mark results to be merged on coveralls")
 	endpoint  = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 	shallow   = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
@@ -69,6 +70,7 @@ type Job struct {
 	SourceFiles        []*SourceFile `json:"source_files"`
 	Git                *Git          `json:"git,omitempty"`
 	RunAt              time.Time     `json:"run_at"`
+	Parallel           bool          `json:"parallel,omitempty"`
 }
 
 // A Response is returned by the Coveralls.io API.
@@ -205,6 +207,7 @@ func process() error {
 		jobId = travisJobId
 	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
 		jobId = circleCiJobId
+
 	} else {
 		jobId = uuid.New()
 	}
@@ -235,6 +238,7 @@ func process() error {
 		Git:                collectGitInfo(),
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
+		Parallel:           parallel,
 	}
 
 	// Ignore files
