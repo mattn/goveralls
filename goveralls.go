@@ -228,6 +228,10 @@ func process() error {
 	if err != nil {
 		return err
 	}
+	var parallelEnabled bool
+	if parallel != nil && *parallel == "true" {
+		parallelEnabled = true
+	}
 
 	j := Job{
 		RunAt:              time.Now(),
@@ -237,7 +241,7 @@ func process() error {
 		Git:                collectGitInfo(),
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
-		Parallel:           parallel,
+		Parallel:           parallelEnabled,
 	}
 
 	// Ignore files
