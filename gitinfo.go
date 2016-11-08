@@ -53,7 +53,7 @@ func collectGitInfo() *Git {
 	}
 	for key, args := range gitCmds {
 		if key == "branch" {
-			if envBranch := os.Getenv("GIT_BRANCH"); envBranch != "" {
+			if envBranch := loadBranchFromEnv(); envBranch != "" {
 				results[key] = envBranch
 				continue
 			}
@@ -103,4 +103,14 @@ func collectGitInfo() *Git {
 		g.Remotes = append(g.Remotes, &r)
 	}
 	return g
+}
+
+func loadBranchFromEnv() string {
+	varNames := []string{"GIT_BRANCH", "CIRCLE_BRANCH", "TRAVIS_BRANCH", "CI_BRANCH"}
+	for _, varName := range varNames {
+		if branch := os.Getenv(varName); branch != "" {
+			return branch
+		}
+	}
+	return ""
 }
