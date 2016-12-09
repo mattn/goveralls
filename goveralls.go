@@ -34,6 +34,7 @@ import (
 var (
 	pkg       = flag.String("package", "", "Go package")
 	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'go test'")
+	debug     = flag.Bool("debug", false, "Enable debug output")
 	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
 	covermode = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
@@ -261,6 +262,14 @@ func process() error {
 		j.SourceFiles = files
 	}
 
+	if *debug {
+		b, err := json.MarshalIndent(j, "", "  ")
+		if err != nil {
+			return err
+		}
+		log.Printf("Posting data: %s", b)
+	}
+
 	b, err := json.Marshal(j)
 	if err != nil {
 		return err
@@ -288,7 +297,7 @@ func process() error {
 	}
 	var response Response
 	if err = json.Unmarshal(bodyBytes, &response); err != nil {
-		return fmt.Errorf("Unable to unmarshal response JSON from coveralls: %s\n%s", err)
+		return fmt.Errorf("Unable to unmarshal response JSON from coveralls: %s\n%s", err, bodyBytes)
 	}
 	if response.Error {
 		return errors.New(response.Message)
