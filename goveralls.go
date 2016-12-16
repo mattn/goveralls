@@ -22,25 +22,36 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/tools/cover"
-
 	"github.com/pborman/uuid"
+	"golang.org/x/tools/cover"
 )
 
 /*
 	https://coveralls.io/docs/api_reference
 */
 
+type Flags []string
+
+func (a *Flags) String() string {
+	return strings.Join(*a, ",")
+}
+
+func (a *Flags) Set(value string) error {
+	*a = append(*a, value)
+	return nil
+}
+
 var (
-	pkg       = flag.String("package", "", "Go package")
-	verbose   = flag.Bool("v", false, "Pass '-v' argument to 'go test'")
-	coverprof = flag.String("coverprofile", "", "If supplied, use a go cover profile")
-	covermode = flag.String("covermode", "count", "sent as covermode argument to go test")
-	repotoken = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
-	endpoint  = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
-	service   = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
-	shallow   = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
-	ignore    = flag.String("ignore", "", "Comma separated files to ignore")
+	extraFlags Flags
+	pkg        = flag.String("package", "", "Go package")
+	verbose    = flag.Bool("v", false, "Pass '-v' argument to 'go test'")
+	coverprof  = flag.String("coverprofile", "", "If supplied, use a go cover profile")
+	covermode  = flag.String("covermode", "count", "sent as covermode argument to go test")
+	repotoken  = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	endpoint   = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
+	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
+	shallow    = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
+	ignore     = flag.String("ignore", "", "Comma separated files to ignore")
 )
 
 // usage supplants package flag's Usage variable
@@ -122,6 +133,7 @@ func getCoverage() ([]*SourceFile, error) {
 		if *verbose {
 			args = append(args, "-v")
 		}
+		args = append(args, extraFlags...)
 		args = append(args, line)
 		cmd.Args = args
 		b, err := cmd.CombinedOutput()
@@ -177,6 +189,7 @@ func process() error {
 	// Parse Flags
 	//
 	flag.Usage = usage
+	flag.Var(&extraFlags, "flags", "extra flags to the tests")
 	flag.Parse()
 	if len(flag.Args()) > 0 {
 		flag.Usage()
