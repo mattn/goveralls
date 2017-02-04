@@ -22,7 +22,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pborman/uuid"
 	"golang.org/x/tools/cover"
 )
 
@@ -218,9 +217,8 @@ func process() error {
 		jobId = travisJobId
 	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
 		jobId = circleCiJobId
-	} else {
-		jobId = uuid.New()
 	}
+
 	if *repotoken == "" {
 		repotoken = nil // remove the entry from json
 	}
@@ -243,11 +241,16 @@ func process() error {
 	j := Job{
 		RunAt:              time.Now(),
 		RepoToken:          repotoken,
-		ServiceJobId:       jobId,
 		ServicePullRequest: pullRequest,
 		Git:                collectGitInfo(),
 		SourceFiles:        sourceFiles,
-		ServiceName:        *service,
+	}
+
+	// Only include a job ID if it's known, otherwise, Coveralls looks
+	// for the job and can't find it.
+	if jobId != "" {
+		j.ServiceJobId = jobId
+		j.ServiceName = *service
 	}
 
 	// Ignore files
