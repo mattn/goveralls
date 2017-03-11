@@ -52,7 +52,6 @@ var (
 	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 	shallow    = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
 	ignore     = flag.String("ignore", "", "Comma separated files to ignore")
-	branches   = flag.String("branches", "", "Comma separated branch names")
 )
 
 // usage supplants package flag's Usage variable
@@ -81,7 +80,6 @@ type Job struct {
 	SourceFiles        []*SourceFile `json:"source_files"`
 	Git                *Git          `json:"git,omitempty"`
 	RunAt              time.Time     `json:"run_at"`
-	Branches           []string      `json:"branches,omitempty"`
 }
 
 // A Response is returned by the Coveralls.io API.
@@ -247,7 +245,6 @@ func process() error {
 		ServicePullRequest: pullRequest,
 		Git:                collectGitInfo(),
 		SourceFiles:        sourceFiles,
-		Branches:           strings.Split(*branches, ","),
 	}
 
 	// Only include a job ID if it's known, otherwise, Coveralls looks
