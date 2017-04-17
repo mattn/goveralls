@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/tools/cover"
 )
@@ -113,9 +114,19 @@ func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 }
 
 func parseCover(fn string) ([]*SourceFile, error) {
-	profs, err := cover.ParseProfiles(fn)
-	if err != nil {
-		return nil, fmt.Errorf("Error parsing coverage: %v", err)
+	var pfss [][]*cover.Profile
+	for _, p := range strings.Split(fn, ",") {
+		profs, err := cover.ParseProfiles(p)
+		if err != nil {
+			return nil, fmt.Errorf("Error parsing coverage: %v", err)
+		}
+		pfss = append(pfss, profs)
 	}
-	return toSF(profs)
+
+	sourceFiles, err := toSF(mergeProfs(pfss))
+	if err != nil {
+		return nil, err
+	}
+
+	return sourceFiles, nil
 }

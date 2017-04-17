@@ -45,7 +45,7 @@ var (
 	pkg        = flag.String("package", "", "Go package")
 	verbose    = flag.Bool("v", false, "Pass '-v' argument to 'go test'")
 	debug      = flag.Bool("debug", false, "Enable debug output")
-	coverprof  = flag.String("coverprofile", "", "If supplied, use a go cover profile")
+	coverprof  = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
 	covermode  = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken  = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
 	endpoint   = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
