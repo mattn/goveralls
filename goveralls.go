@@ -218,6 +218,8 @@ func process() error {
 		jobId = travisJobId
 	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
 		jobId = circleCiJobId
+	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
+		jobId = appveyorJobId
 	}
 
 	if *repotoken == "" {
@@ -232,6 +234,8 @@ func process() error {
 	} else if prURL := os.Getenv("CI_PULL_REQUEST"); prURL != "" {
 		// for Circle CI
 		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
+	} else if prNumber := os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER"); prNumber != "" {
+		pullRequest = prNumber
 	}
 
 	sourceFiles, err := getCoverage()
