@@ -14,27 +14,30 @@ func TestLoadBranchFromEnv(t *testing.T) {
 		{
 			"all vars defined",
 			map[string]string{
-				"GIT_BRANCH":    "master",
-				"CIRCLE_BRANCH": "circle-master",
-				"TRAVIS_BRANCH": "travis-master",
-				"CI_BRANCH":     "ci-master",
+				"GIT_BRANCH":           "master",
+				"CIRCLE_BRANCH":        "circle-master",
+				"TRAVIS_BRANCH":        "travis-master",
+				"CI_BRANCH":            "ci-master",
+				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 			},
 			"master",
 		},
 		{
 			"all except GIT_BRANCH",
 			map[string]string{
-				"CIRCLE_BRANCH": "circle-master",
-				"TRAVIS_BRANCH": "travis-master",
-				"CI_BRANCH":     "ci-master",
+				"CIRCLE_BRANCH":        "circle-master",
+				"TRAVIS_BRANCH":        "travis-master",
+				"CI_BRANCH":            "ci-master",
+				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 			},
 			"circle-master",
 		},
 		{
 			"all except GIT_BRANCH and CIRCLE_BRANCH",
 			map[string]string{
-				"TRAVIS_BRANCH": "travis-master",
-				"CI_BRANCH":     "ci-master",
+				"TRAVIS_BRANCH":        "travis-master",
+				"CI_BRANCH":            "ci-master",
+				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 			},
 			"travis-master",
 		},
@@ -44,6 +47,13 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"CI_BRANCH": "ci-master",
 			},
 			"ci-master",
+		},
+		{
+			"only APPVEYOR_REPO_BRANCH defined",
+			map[string]string{
+				"APPVEYOR_REPO_BRANCH": "appveyor-master",
+			},
+			"appveyor-master",
 		},
 		{
 			"no branch var defined",
@@ -61,7 +71,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 }
 
 func resetBranchEnvs(values map[string]string) {
-	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH"} {
+	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH", "APPVEYOR_REPO_BRANCH"} {
 		os.Unsetenv(envVar)
 	}
 	for k, v := range values {
