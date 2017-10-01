@@ -40,7 +40,7 @@ Enable Travis-CI on your github repository settings.
 
 For a **public** github repository put below's `.travis.yml`.
 
-```
+```yml
 language: go
 sudo: false
 go:
@@ -55,7 +55,7 @@ For a **public** github repository, it is not necessary to define your repositor
 
 For a **private** github repository put below's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
 
-```
+```yml
 language: go
 sudo: false
 go:
@@ -81,7 +81,7 @@ $ travis encrypt COVERALLS_TOKEN=your_token_goes_here --add env.global
 
 travis will add `env` block as following example:
 
-```
+```yml
 env:
   global:
     secure: xxxxxxxxxxxxx
