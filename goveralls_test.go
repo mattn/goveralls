@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -78,6 +79,35 @@ func TestVerboseArg(t *testing.T) {
 		if strings.Contains(string(b), "--- PASS") {
 			t.Error("Expected to haven't verbosed go test output in stdout", string(b))
 		}
+	})
+}
+
+func TestFindRepositoryRoot(t *testing.T) {
+	t.Run("without directory", func(t *testing.T) {
+		root, rs := findRepositoryRoot("")
+		if root != "" && rs != false {
+			t.Error("Expected to have empty string for directory and false")
+		}
+	})
+
+	t.Run("with directory", func(t *testing.T) {
+		dir, err := ioutil.TempDir("", "goveralls")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.RemoveAll(dir) // clean up
+
+		cmd := exec.Command("git", "clone", "https://github.com/mattn/goveralls.git", dir)
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatal("Expected exit code 0 got 1", err, string(b))
+		}
+
+		root, rs := findRepositoryRoot(dir)
+		if root == "" && rs == false {
+			t.Error("Expected a directory and true.")
+		}
+
 	})
 }
 

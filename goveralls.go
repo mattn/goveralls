@@ -234,6 +234,8 @@ func process() error {
 		jobId = circleCiJobId
 	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
 		jobId = appveyorJobId
+	} else if gcbJobId := os.Getenv("BUILD_ID"); gcbJobId != "" {
+		jobId = gcbJobId
 	}
 
 	if *repotoken == "" {
