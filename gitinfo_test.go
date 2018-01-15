@@ -18,6 +18,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"CIRCLE_BRANCH":        "circle-master",
 				"TRAVIS_BRANCH":        "travis-master",
 				"CI_BRANCH":            "ci-master",
+				"BRANCH_NAME":          "gcb-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 			},
 			"master",
@@ -28,6 +29,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"CIRCLE_BRANCH":        "circle-master",
 				"TRAVIS_BRANCH":        "travis-master",
 				"CI_BRANCH":            "ci-master",
+				"BRANCH_NAME":          "gcb-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 			},
 			"circle-master",
@@ -37,6 +39,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 			map[string]string{
 				"TRAVIS_BRANCH":        "travis-master",
 				"CI_BRANCH":            "ci-master",
+				"BRANCH_NAME":          "gcb-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 			},
 			"travis-master",
@@ -71,7 +74,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 }
 
 func resetBranchEnvs(values map[string]string) {
-	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH", "APPVEYOR_REPO_BRANCH"} {
+	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH", "APPVEYOR_REPO_BRANCH", "BRANCH_NAME"} {
 		os.Unsetenv(envVar)
 	}
 	for k, v := range values {
