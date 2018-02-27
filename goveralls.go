@@ -234,6 +234,8 @@ func process() error {
 		jobId = circleCiJobId
 	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
 		jobId = appveyorJobId
+	} else if semaphoreJobId := os.Getenv("SEMPAHORE_BUILD_NUMBER"); semaphoreJobId != "" {
+		jobId = semaphoreJobId
 	}
 
 	if *repotoken == "" {
@@ -249,6 +251,8 @@ func process() error {
 		// for Circle CI
 		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
 	} else if prNumber := os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER"); prNumber != "" {
+		pullRequest = prNumber
+	} else if prNumber := os.Getenv("PULL_REQUEST_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	}
 
