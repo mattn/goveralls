@@ -54,6 +54,7 @@ var (
 	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 	shallow    = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
 	ignore     = flag.String("ignore", "", "Comma separated files to ignore")
+	show       = flag.Bool("show", false, "Show which package is being tested")
 )
 
 // usage supplants package flag's Usage variable
@@ -149,6 +150,9 @@ func getCoverage() ([]*SourceFile, error) {
 		args = append(args, line)
 		cmd.Args = args
 
+		if *show {
+			fmt.Println("goveralls:", line)
+		}
 		err = cmd.Run()
 		if err != nil {
 			return nil, fmt.Errorf("%v: %v", err, outBuf.String())

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,8 +11,6 @@ import (
 
 	"net/http"
 	"net/http/httptest"
-
-	"github.com/pborman/uuid"
 )
 
 func fakeServer() *httptest.Server {
@@ -81,6 +80,29 @@ func TestVerboseArg(t *testing.T) {
 	})
 }
 
+func TestShowArg(t *testing.T) {
+	tmp := prepareTest(t)
+	defer os.RemoveAll(tmp)
+	fs := fakeServer()
+
+	t.Run("with show", func(t *testing.T) {
+		cmd := exec.Command("goveralls", "-package=github.com/mattn/goveralls/tester/...", "-show", "-endpoint")
+		cmd.Args = append(cmd.Args, "-show", "-endpoint", fs.URL)
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatal("Expected exit code 0 got 1", err, string(b))
+		}
+
+		expected := `goveralls: github.com/mattn/goveralls/tester
+Fake message
+http://fake.url
+`
+		if string(b) != expected {
+			t.Error("Unexpected output for -show:", string(b))
+		}
+	})
+}
+
 func TestRaceArg(t *testing.T) {
 	tmp := prepareTest(t)
 	defer os.RemoveAll(tmp)
@@ -117,8 +139,10 @@ func TestGoveralls(t *testing.T) {
 */
 
 func prepareTest(t *testing.T) (tmpPath string) {
-	tmp := os.TempDir()
-	tmp = filepath.Join(tmp, uuid.New())
+	tmp, err := ioutil.TempDir("", "goveralls")
+	if err != nil {
+		t.Fatal("prepareTest:", err)
+	}
 	runCmd(t, "go", "build", "-o", filepath.Join(tmp, "bin", "goveralls"), "github.com/mattn/goveralls")
 	os.Setenv("PATH", filepath.Join(tmp, "bin")+string(filepath.ListSeparator)+os.Getenv("PATH"))
 	os.MkdirAll(filepath.Join(tmp, "src"), 0755)
