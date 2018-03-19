@@ -137,7 +137,7 @@ test:
 
 For more information, See https://coveralls.zendesk.com/hc/en-us/articles/201342809-Go
 
-## Sempahore
+## Semaphore
 
 Store your Coveralls API token in `Environment Variables`:
 
