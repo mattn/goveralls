@@ -8,6 +8,7 @@ package main
 import (
 	"bytes"
 	_ "crypto/sha512"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -54,6 +55,7 @@ var (
 	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
 	shallow    = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
 	ignore     = flag.String("ignore", "", "Comma separated files to ignore")
+	insecure   = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
 	show       = flag.Bool("show", false, "Show which package is being tested")
 )
 
@@ -227,6 +229,13 @@ func process() error {
 		}
 	}
 	os.Setenv("PATH", strings.Join(paths, string(filepath.ListSeparator)))
+
+	//
+	// Handle certificate verification configuration
+	//
+	if *insecure {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
 
 	//
 	// Initialize Job
