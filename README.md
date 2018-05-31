@@ -145,7 +145,7 @@ Store your Coveralls API token in `Environment Variables`:
 COVERALLS_TOKEN=your_token_goes_here
 ```
 
-More instructions on how to do this can be found in the [Semahore documentation](https://semaphoreci.com/docs/exporting-environment-variables.html).
+More instructions on how to do this can be found in the [Semaphore documentation](https://semaphoreci.com/docs/exporting-environment-variables.html).
 
 Replace the `go test` line in your `Commands` with these lines:
 
@@ -161,6 +161,14 @@ You can use the `-v` flag to see verbose output from the test suite:
 
 ```
 $ goveralls -v -service semaphore
+```
+
+## Coveralls Enterprise
+
+If you are using Coveralls Enterprise and have a self-signed certificate, you need to skip certificate verification:
+
+```shell
+$ goveralls -insecure
 ```
 
 # Authors
