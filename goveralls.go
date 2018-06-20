@@ -249,6 +249,8 @@ func process() error {
 		jobId = appveyorJobId
 	} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
 		jobId = semaphoreJobId
+	} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
+		jobId = jenkinsJobId
 	}
 
 	if *repotoken == "" {
