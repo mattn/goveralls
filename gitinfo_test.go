@@ -19,6 +19,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"TRAVIS_BRANCH":        "travis-master",
 				"CI_BRANCH":            "ci-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
+				"WERCKER_GIT_BRANCH":   "wercker-master",
 			},
 			"master",
 		},
@@ -29,6 +30,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"TRAVIS_BRANCH":        "travis-master",
 				"CI_BRANCH":            "ci-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
+				"WERCKER_GIT_BRANCH":   "wercker-master",
 			},
 			"circle-master",
 		},
@@ -38,6 +40,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"TRAVIS_BRANCH":        "travis-master",
 				"CI_BRANCH":            "ci-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
+				"WERCKER_GIT_BRANCH":   "wercker-master",
 			},
 			"travis-master",
 		},
@@ -56,6 +59,13 @@ func TestLoadBranchFromEnv(t *testing.T) {
 			"appveyor-master",
 		},
 		{
+			"only WERCKER_GIT_BRANCH defined",
+			map[string]string{
+				"WERCKER_GIT_BRANCH": "wercker-master",
+			},
+			"wercker-master",
+		},
+		{
 			"no branch var defined",
 			map[string]string{},
 			"",
@@ -71,7 +81,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 }
 
 func resetBranchEnvs(values map[string]string) {
-	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH", "APPVEYOR_REPO_BRANCH"} {
+	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH", "APPVEYOR_REPO_BRANCH", "WERCKER_GIT_BRANCH"} {
 		os.Unsetenv(envVar)
 	}
 	for k, v := range values {
