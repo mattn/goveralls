@@ -253,6 +253,8 @@ func process() error {
 		jobId = semaphoreJobId
 	} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
 		jobId = jenkinsJobId
+	} else if buildId := os.Getenv("BUILDKITE_BUILD_ID"); buildId != "" {
+		jobId = buildId
 	}
 
 	if *repotoken == "" {
@@ -270,6 +272,8 @@ func process() error {
 	} else if prNumber := os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("PULL_REQUEST_NUMBER"); prNumber != "" {
+		pullRequest = prNumber
+	} else if prNumber := os.Getenv("BUILDKITE_PULL_REQUEST"); prNumber != "" {
 		pullRequest = prNumber
 	}
 
