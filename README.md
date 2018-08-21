@@ -27,6 +27,12 @@ $ goveralls -repotoken your_repos_coveralls_token
 You can set the environment variable `$COVERALLS_TOKEN` to your token so you do
 not have to specify it at each invocation.
 
+
+You can also run this reporter for multiple passes with the flag `-parallel` or
+by setting the environment variable `COVERALLS_PARALLEL=true` (see [coveralls
+docs](https://docs.coveralls.io/parallel-build-webhook) for more details.
+
+
 # Continuous Integration
 
 There is no need to run `go test` separately, as `goveralls` runs the entire
