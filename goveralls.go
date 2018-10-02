@@ -43,21 +43,22 @@ func (a *Flags) Set(value string) error {
 }
 
 var (
-	extraFlags Flags
-	pkg        = flag.String("package", "", "Go package")
-	verbose    = flag.Bool("v", false, "Pass '-v' argument to 'go test' and output to stdout")
-	race       = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
-	debug      = flag.Bool("debug", false, "Enable debug output")
-	coverprof  = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
-	covermode  = flag.String("covermode", "count", "sent as covermode argument to go test")
-	repotoken  = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
-	parallel   = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
-	endpoint   = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
-	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
-	shallow    = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
-	ignore     = flag.String("ignore", "", "Comma separated files to ignore")
-	insecure   = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
-	show       = flag.Bool("show", false, "Show which package is being tested")
+	extraFlags  Flags
+	pkg         = flag.String("package", "", "Go package")
+	verbose     = flag.Bool("v", false, "Pass '-v' argument to 'go test' and output to stdout")
+	race        = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
+	debug       = flag.Bool("debug", false, "Enable debug output")
+	coverprof   = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
+	covermode   = flag.String("covermode", "count", "sent as covermode argument to go test")
+	repotoken   = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	parallel    = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
+	endpoint    = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
+	service     = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
+	shallow     = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
+	ignore      = flag.String("ignore", "", "Comma separated files to ignore")
+	insecure    = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
+	show        = flag.Bool("show", false, "Show which package is being tested")
+	customJobId = flag.String("jobid", "", "Custom set job token")
 )
 
 // usage supplants package flag's Usage variable
@@ -242,17 +243,23 @@ func process() error {
 	//
 	// Initialize Job
 	//
-	var jobId string
-	if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
-		jobId = travisJobId
-	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
-		jobId = circleCiJobId
-	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
-		jobId = appveyorJobId
-	} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
-		jobId = semaphoreJobId
-	} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
-		jobId = jenkinsJobId
+	jobId := *customJobId
+	if customJobId == nil || *customJobId == "" {
+		jobId = os.Getenv("CUSTOM_JOB_ID")
+	}
+
+	if jobId == "" {
+		if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
+			jobId = travisJobId
+		} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
+			jobId = circleCiJobId
+		} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
+			jobId = appveyorJobId
+		} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
+			jobId = semaphoreJobId
+		} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
+			jobId = jenkinsJobId
+		}
 	}
 
 	if *repotoken == "" {
