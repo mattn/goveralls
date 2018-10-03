@@ -248,21 +248,20 @@ func process() error {
 	jobId := *customJobId
 	if *customJobId == "" {
 		jobId = os.Getenv("CUSTOM_JOB_ID")
-	} 
-
-	if jobId == "" {
-		if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
-			jobId = travisJobId
-		} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
-			jobId = circleCiJobId
-		} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
-			jobId = appveyorJobId
-		} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
-			jobId = semaphoreJobId
-		} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
-			jobId = jenkinsJobId
-		}
+	} else if customJobIdEnv := os.Getenv("CUSTOM_JOB_ID"); customJobIdEnv != "" {
+		jobId = customJobIdEnv
+	} else if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
+		jobId = travisJobId
+	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
+		jobId = circleCiJobId
+	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
+		jobId = appveyorJobId
+	} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
+		jobId = semaphoreJobId
+	} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
+		jobId = jenkinsJobId
 	}
+	
 
 	if *repotoken == "" {
 		repotoken = nil // remove the entry from json
