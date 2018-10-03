@@ -243,8 +243,10 @@ func process() error {
 	//
 	// Initialize Job
 	//
+
+	// flags are never nil, so no nil check needed
 	jobId := *customJobId
-	if customJobId == nil || *customJobId == "" {
+	if *customJobId == "" {
 		jobId = os.Getenv("CUSTOM_JOB_ID")
 	} 
 
