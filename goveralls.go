@@ -246,7 +246,7 @@ func process() error {
 	jobId := *customJobId
 	if customJobId == nil || *customJobId == "" {
 		jobId = os.Getenv("CUSTOM_JOB_ID")
-	}
+	} 
 
 	if jobId == "" {
 		if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
