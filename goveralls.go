@@ -289,13 +289,13 @@ func process() error {
 		Parallel:           parallel,
 		Git:                collectGitInfo(),
 		SourceFiles:        sourceFiles,
+		ServiceName:        *service,
 	}
 
 	// Only include a job ID if it's known, otherwise, Coveralls looks
 	// for the job and can't find it.
 	if jobId != "" {
 		j.ServiceJobId = jobId
-		j.ServiceName = *service
 	}
 
 	// Ignore files
