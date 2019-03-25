@@ -255,6 +255,8 @@ func process() error {
 		jobId = jenkinsJobId
 	} else if droneBuildNumber := os.Getenv("DRONE_BUILD_NUMBER"); droneBuildNumber != "" {
 		jobId = droneBuildNumber
+	} else if buildkiteBuildNumber := os.Getenv("BUILDKITE_BUILD_NUMBER"); buildkiteBuildNumber != "" {
+		jobId = buildkiteBuildNumber
 	}
 
 	if *repotoken == "" {
@@ -274,6 +276,8 @@ func process() error {
 	} else if prNumber := os.Getenv("PULL_REQUEST_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("DRONE_PULL_REQUEST"); prNumber != "" {
+		pullRequest = prNumber
+	} else if prNumber := os.Getenv("BUILDKITE_PULL_REQUEST"); prNumber != "" {
 		pullRequest = prNumber
 	}
 
