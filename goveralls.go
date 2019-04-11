@@ -51,6 +51,7 @@ var (
 	coverprof  = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
 	covermode  = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken  = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	jobId      = flag.String("jobId", os.Getenv("BUILD_NUMBER"), "Build Number for non supported ci's")
 	parallel   = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
 	endpoint   = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
@@ -242,21 +243,26 @@ func process() error {
 	//
 	// Initialize Job
 	//
-	var jobId string
+	if *jobId == "" {
+		jobId = nil
+	} else {
+		fmt.Println(*jobId)
+	}
+
 	if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
-		jobId = travisJobId
+		*jobId = travisJobId
 	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
-		jobId = circleCiJobId
+		*jobId = circleCiJobId
 	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
-		jobId = appveyorJobId
+		*jobId = appveyorJobId
 	} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
-		jobId = semaphoreJobId
+		*jobId = semaphoreJobId
 	} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
-		jobId = jenkinsJobId
+		*jobId = jenkinsJobId
 	} else if droneBuildNumber := os.Getenv("DRONE_BUILD_NUMBER"); droneBuildNumber != "" {
-		jobId = droneBuildNumber
+		*jobId = droneBuildNumber
 	} else if buildkiteBuildNumber := os.Getenv("BUILDKITE_BUILD_NUMBER"); buildkiteBuildNumber != "" {
-		jobId = buildkiteBuildNumber
+		*jobId = buildkiteBuildNumber
 	}
 
 	if *repotoken == "" {
@@ -298,8 +304,8 @@ func process() error {
 
 	// Only include a job ID if it's known, otherwise, Coveralls looks
 	// for the job and can't find it.
-	if jobId != "" {
-		j.ServiceJobId = jobId
+	if *jobId != "" {
+		j.ServiceJobId = *jobId
 	}
 
 	// Ignore files
