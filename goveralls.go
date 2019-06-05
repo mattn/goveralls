@@ -109,9 +109,14 @@ func getPkgs(pkg string) ([]string, error) {
 	allPkgs := strings.Split(strings.Trim(string(out), "\n"), "\n")
 	pkgs := make([]string, 0, len(allPkgs))
 	for _, p := range allPkgs {
-		if !strings.Contains(p, "/vendor/") {
-			pkgs = append(pkgs, p)
+		if strings.Contains(p, "/vendor/") {
+			continue
 		}
+		// go modules output
+		if strings.Contains(p, "go: ") {
+			continue
+		}
+		pkgs = append(pkgs, p)
 	}
 	return pkgs, nil
 }
