@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,7 +54,7 @@ var (
 	repotoken  = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
 	parallel   = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
 	endpoint   = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
-	service    = flag.String("service", "travis-ci", "The CI service or other environment in which the test suite was run. ")
+	service    = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
 	shallow    = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
 	ignore     = flag.String("ignore", "", "Comma separated files to ignore")
 	insecure   = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
@@ -262,6 +263,13 @@ func process() error {
 		jobId = droneBuildNumber
 	} else if buildkiteBuildNumber := os.Getenv("BUILDKITE_BUILD_NUMBER"); buildkiteBuildNumber != "" {
 		jobId = buildkiteBuildNumber
+	} else if githubSha := os.Getenv("GITHUB_SHA"); githubSha != "" {
+		if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
+			number, _ := getGithubEvent()["number"].(float64)
+			jobId = fmt.Sprintf(`%s-PR-%d`, githubSha, int(number))
+		} else {
+			jobId = githubSha
+		}
 	}
 
 	if *repotoken == "" {
@@ -284,6 +292,13 @@ func process() error {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("BUILDKITE_PULL_REQUEST"); prNumber != "" {
 		pullRequest = prNumber
+	} else if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
+		number, _ := getGithubEvent()["number"].(float64)
+		pullRequest = strconv.Itoa(int(number))
+	}
+
+	if *service == "" && os.Getenv("TRAVIS_JOB_ID") != "" {
+		*service = "travis-ci"
 	}
 
 	sourceFiles, err := getCoverage()
@@ -291,12 +306,19 @@ func process() error {
 		return err
 	}
 
+	commitRef := "HEAD"
+	if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
+		ghPR, _ := getGithubEvent()["pull_request"].(map[string]interface{})
+		ghHead, _ := ghPR["head"].(map[string]interface{})
+		commitRef, _ = ghHead["sha"].(string)
+	}
+
 	j := Job{
 		RunAt:              time.Now(),
 		RepoToken:          repotoken,
 		ServicePullRequest: pullRequest,
 		Parallel:           parallel,
-		Git:                collectGitInfo(),
+		Git:                collectGitInfo(commitRef),
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
 	}
@@ -374,6 +396,30 @@ func process() error {
 	fmt.Println(response.Message)
 	fmt.Println(response.URL)
 	return nil
+}
+
+func getGithubEvent() map[string]interface{} {
+	jsonFilePath := os.Getenv("GITHUB_EVENT_PATH")
+	if jsonFilePath == "" {
+		return nil
+	}
+
+	jsonFile, err := os.Open(jsonFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer jsonFile.Close()
+
+	jsonByte, _ := ioutil.ReadAll(jsonFile)
+
+	// unmarshal the json into a release event
+	var event map[string]interface{}
+	err = json.Unmarshal(jsonByte, &event)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return event
 }
 
 func main() {

@@ -24,15 +24,15 @@ type Git struct {
 }
 
 // collectGitInfo runs several git commands to compose a Git object.
-func collectGitInfo() *Git {
+func collectGitInfo(ref string) *Git {
 	gitCmds := map[string][]string{
-		"id":      {"rev-parse", "HEAD"},
-		"branch":  {"rev-parse", "--abbrev-ref", "HEAD"},
-		"aname":   {"log", "-1", "--pretty=%aN"},
-		"aemail":  {"log", "-1", "--pretty=%aE"},
-		"cname":   {"log", "-1", "--pretty=%cN"},
-		"cemail":  {"log", "-1", "--pretty=%cE"},
-		"message": {"log", "-1", "--pretty=%s"},
+		"id":      {"rev-parse", ref},
+		"branch":  {"branch", "--format", "%(refname:short)", "--contains", ref},
+		"aname":   {"show", "-s", "--format=%aN", ref},
+		"aemail":  {"show", "-s", "--format=%aE", ref},
+		"cname":   {"show", "-s", "--format=%cN", ref},
+		"cemail":  {"show", "-s", "--format=%cE", ref},
+		"message": {"show", "-s", "--format=%s", ref},
 	}
 	results := map[string]string{}
 	gitPath, err := exec.LookPath("git")
@@ -60,16 +60,16 @@ func collectGitInfo() *Git {
 		results[key] = s
 	}
 	h := Head{
-		Id:             results["id"],
-		AuthorName:     results["aname"],
-		AuthorEmail:    results["aemail"],
-		CommitterName:  results["cname"],
-		CommitterEmail: results["cemail"],
+		Id:             strings.Split(results["id"], "\n")[0],
+		AuthorName:     strings.Split(results["aname"], "\n")[0],
+		AuthorEmail:    strings.Split(results["aemail"], "\n")[0],
+		CommitterName:  strings.Split(results["cname"], "\n")[0],
+		CommitterEmail: strings.Split(results["cemail"], "\n")[0],
 		Message:        results["message"],
 	}
 	g := &Git{
 		Head:   h,
-		Branch: results["branch"],
+		Branch: strings.Split(results["branch"], "\n")[0],
 	}
 	return g
 }
@@ -81,5 +81,6 @@ func loadBranchFromEnv() string {
 			return branch
 		}
 	}
+
 	return ""
 }
