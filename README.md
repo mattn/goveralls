@@ -38,6 +38,41 @@ docs](https://docs.coveralls.io/parallel-build-webhook) for more details.
 There is no need to run `go test` separately, as `goveralls` runs the entire
 test suite.
 
+## Github Actions
+
+```yaml
+name: Quality
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+    - master
+jobs:
+  test:
+    name: Test with Coverage
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+    - name: Check out code
+      uses: actions/checkout@master
+    - name: Install dependencies
+      run: |
+        go mod download
+    - name: Run Unit tests
+      run: |
+        go test -race -covermode atomic -coverprofile=profile.cov ./...
+    - name: Send coverage
+      env:
+        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        GO111MODULE=off go get github.com/mattn/goveralls
+        $(go env GOPATH)/bin/goveralls -coverprofile=profile.cov -service=github
+```
+
 ## Travis CI
 
 ### GitHub Integration
