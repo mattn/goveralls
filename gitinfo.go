@@ -75,7 +75,7 @@ func collectGitInfo(ref string) *Git {
 }
 
 func loadBranchFromEnv() string {
-	varNames := []string{"GIT_BRANCH", "CIRCLE_BRANCH", "TRAVIS_BRANCH", "CI_BRANCH", "APPVEYOR_REPO_BRANCH", "WERCKER_GIT_BRANCH", "DRONE_BRANCH", "BUILDKITE_BRANCH", "BRANCH_NAME"}
+	varNames := []string{"GIT_BRANCH", "GITHUB_REF", "CIRCLE_BRANCH", "TRAVIS_BRANCH", "CI_BRANCH", "APPVEYOR_REPO_BRANCH", "WERCKER_GIT_BRANCH", "DRONE_BRANCH", "BUILDKITE_BRANCH", "BRANCH_NAME"}
 	for _, varName := range varNames {
 		if branch := os.Getenv(varName); branch != "" {
 			return branch

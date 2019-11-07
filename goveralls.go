@@ -264,11 +264,12 @@ func process() error {
 	} else if buildkiteBuildNumber := os.Getenv("BUILDKITE_BUILD_NUMBER"); buildkiteBuildNumber != "" {
 		jobId = buildkiteBuildNumber
 	} else if githubSha := os.Getenv("GITHUB_SHA"); githubSha != "" {
+		githubShortSha := githubSha[0:9]
 		if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-			number, _ := getGithubEvent()["number"].(float64)
-			jobId = fmt.Sprintf(`%s-PR-%d`, githubSha, int(number))
+			number := getGithubEvent()["number"].(float64)
+			jobId = fmt.Sprintf(`%s-PR-%d`, githubShortSha, int(number))
 		} else {
-			jobId = githubSha
+			jobId = githubShortSha
 		}
 	}
 
@@ -293,7 +294,7 @@ func process() error {
 	} else if prNumber := os.Getenv("BUILDKITE_PULL_REQUEST"); prNumber != "" {
 		pullRequest = prNumber
 	} else if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-		number, _ := getGithubEvent()["number"].(float64)
+		number := getGithubEvent()["number"].(float64)
 		pullRequest = strconv.Itoa(int(number))
 	}
 
@@ -308,9 +309,9 @@ func process() error {
 
 	commitRef := "HEAD"
 	if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-		ghPR, _ := getGithubEvent()["pull_request"].(map[string]interface{})
-		ghHead, _ := ghPR["head"].(map[string]interface{})
-		commitRef, _ = ghHead["sha"].(string)
+		ghPR := getGithubEvent()["pull_request"].(map[string]interface{})
+		ghHead := ghPR["head"].(map[string]interface{})
+		commitRef = ghHead["sha"].(string)
 	}
 
 	j := Job{
