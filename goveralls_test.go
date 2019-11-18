@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,6 +22,31 @@ func fakeServer() *httptest.Server {
 	}))
 }
 
+func fakeServerWithPayloadChannel(payload chan Job) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// this is a standard baked response
+		fmt.Fprintln(w, `{"error":false,"message":"Fake message","URL":"http://fake.url"}`)
+
+		body, err := ioutil.ReadAll(r.Body)
+		// query params are used for the body payload
+		vals, err := url.ParseQuery(string(body))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var job Job
+		err = json.Unmarshal([]byte(vals["json"][0]), &job)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		payload <- job
+
+		w.WriteHeader(http.StatusOK)
+	}))
+}
+
 func TestUsage(t *testing.T) {
 	tmp := prepareTest(t)
 	defer os.RemoveAll(tmp)
@@ -31,6 +58,26 @@ func TestUsage(t *testing.T) {
 	s := strings.Split(string(b), "\n")[0]
 	if !strings.HasPrefix(s, "Usage: goveralls ") {
 		t.Fatalf("Expected %v, but %v", "Usage: ", s)
+	}
+}
+
+func TestCustomJobId(t *testing.T) {
+	tmp := prepareTest(t)
+	defer os.RemoveAll(tmp)
+	jobBodyChannel := make(chan Job, 8096)
+	fs := fakeServerWithPayloadChannel(jobBodyChannel)
+
+	cmd := exec.Command("goveralls", "-jobid=123abc", "-package=github.com/mattn/goveralls/tester", "-endpoint")
+	cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatal("Expected exit code 0 got 1", err, string(b))
+	}
+
+	jobBody := <-jobBodyChannel
+
+	if jobBody.ServiceJobId != "123abc" {
+		t.Fatalf("Expected job id of 123abc, but was %s", jobBody.ServiceJobId)
 	}
 }
 
