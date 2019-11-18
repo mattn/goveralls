@@ -60,6 +60,7 @@ var (
 	insecure    = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
 	show        = flag.Bool("show", false, "Show which package is being tested")
 	customJobId = flag.String("jobid", "", "Custom set job token")
+	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
 )
 
 // usage supplants package flag's Usage variable
@@ -83,6 +84,7 @@ type SourceFile struct {
 type Job struct {
 	RepoToken          *string       `json:"repo_token,omitempty"`
 	ServiceJobId       string        `json:"service_job_id"`
+	ServiceJobNumber   string        `json:"service_job_number,omitempty"`
 	ServicePullRequest string        `json:"service_pull_request,omitempty"`
 	ServiceName        string        `json:"service_name"`
 	SourceFiles        []*SourceFile `json:"source_files"`
@@ -336,6 +338,7 @@ func process() error {
 	if jobId != "" {
 		j.ServiceJobId = jobId
 	}
+	j.ServiceJobNumber = *jobNumber
 
 	// Ignore files
 	if len(*ignore) > 0 {
