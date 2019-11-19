@@ -256,8 +256,8 @@ func process() error {
 	var jobId string
 	if *customJobId != "" {
 		jobId = *customJobId
-	} else if customJobIdEnv := os.Getenv("CUSTOM_JOB_ID"); customJobIdEnv != "" {
-		jobId = customJobIdEnv
+	} else if serviceJobId := os.Getenv("COVERALLS_SERVICE_JOB_ID"); serviceJobId != "" {
+		jobId = serviceJobId
 	} else if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
 		jobId = travisJobId
 	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
