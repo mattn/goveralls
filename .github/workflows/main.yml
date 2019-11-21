@@ -8,7 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: shogo82148/actions-goveralls@v1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-profile: profile.cov
+      - uses: actions/checkout@v1
+      - run: go test -v -coverprofile=profile.cov .
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-profile: profile.cov
