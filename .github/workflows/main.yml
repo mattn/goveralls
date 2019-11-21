@@ -9,6 +9,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+      - run: go get github.com/mattn/goveralls
       - run: go get golang.org/x/tools/cmd/cover
       - run: go vet
       - run: go test -v -coverprofile=profile.cov .
