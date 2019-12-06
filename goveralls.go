@@ -272,6 +272,8 @@ func process() error {
 		jobId = droneBuildNumber
 	} else if buildkiteBuildNumber := os.Getenv("BUILDKITE_BUILD_NUMBER"); buildkiteBuildNumber != "" {
 		jobId = buildkiteBuildNumber
+	} else if codeshipJobId := os.Getenv("CI_BUILD_ID"); codeshipJobId != "" {
+		jobId = codeshipJobId
 	} else if githubSha := os.Getenv("GITHUB_SHA"); githubSha != "" {
 		githubShortSha := githubSha[0:9]
 		if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
@@ -301,6 +303,8 @@ func process() error {
 	} else if prNumber := os.Getenv("DRONE_PULL_REQUEST"); prNumber != "" {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("BUILDKITE_PULL_REQUEST"); prNumber != "" {
+		pullRequest = prNumber
+	} else if prNumber := os.Getenv("CI_PR_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	} else if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
 		number := getGithubEvent()["number"].(float64)
