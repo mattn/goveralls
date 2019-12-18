@@ -207,10 +207,10 @@ func findRepositoryRoot(dir string) (string, bool) {
 
 func getCoverallsSourceFileName(name string) string {
 	if dir, ok := findRepositoryRoot(name); !ok {
-		return name
+		return filepath.ToSlash(name)
 	} else {
 		filename := strings.TrimPrefix(name, dir+string(os.PathSeparator))
-		return filename
+		return filepath.ToSlash(filename)
 	}
 }
 
