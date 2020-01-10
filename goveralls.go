@@ -322,9 +322,11 @@ func process() error {
 
 	commitRef := "HEAD"
 	if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-		ghPR := getGithubEvent()["pull_request"].(map[string]interface{})
-		ghHead := ghPR["head"].(map[string]interface{})
-		commitRef = ghHead["sha"].(string)
+		// ghPR := getGithubEvent()["pull_request"].(map[string]interface{})
+		// ghHead := ghPR["head"].(map[string]interface{})
+		// commitRef = ghHead["sha"].(string)
+		log.Printf("github event value: %+v", getGithubEvent())
+                commitRef = fmt.Sprintf("refs/pull/%s/merge", pullRequest)
 	}
 
 	j := Job{
