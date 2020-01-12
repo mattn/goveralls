@@ -37,7 +37,7 @@ jobs:
           go install .
         working-directory: src/github.com/mattn/goveralls
       - name: test
-        run: goveralls
+        run: goveralls -service=github
         working-directory: src/github.com/mattn/goveralls
         env:
           COVERALLS_TOKEN: ${{ github.token }}
