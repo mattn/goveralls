@@ -20,6 +20,9 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"CI_BRANCH":            "ci-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 				"WERCKER_GIT_BRANCH":   "wercker-master",
+				"DRONE_BRANCH":         "drone-master",
+				"BUILDKITE_BRANCH":     "buildkite-master",
+				"BRANCH_NAME":          "jenkins-master",
 			},
 			"master",
 		},
@@ -31,6 +34,9 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"CI_BRANCH":            "ci-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 				"WERCKER_GIT_BRANCH":   "wercker-master",
+				"DRONE_BRANCH":         "drone-master",
+				"BUILDKITE_BRANCH":     "buildkite-master",
+				"BRANCH_NAME":          "jenkins-master",
 			},
 			"circle-master",
 		},
@@ -41,6 +47,9 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"CI_BRANCH":            "ci-master",
 				"APPVEYOR_REPO_BRANCH": "appveyor-master",
 				"WERCKER_GIT_BRANCH":   "wercker-master",
+				"DRONE_BRANCH":         "drone-master",
+				"BUILDKITE_BRANCH":     "buildkite-master",
+				"BRANCH_NAME":          "jenkins-master",
 			},
 			"travis-master",
 		},
@@ -66,6 +75,34 @@ func TestLoadBranchFromEnv(t *testing.T) {
 			"wercker-master",
 		},
 		{
+			"only BRANCH_NAME defined",
+			map[string]string{
+				"BRANCH_NAME": "jenkins-master",
+			},
+			"jenkins-master",
+		},
+		{
+			"only BUILDKITE_BRANCH defined",
+			map[string]string{
+				"BUILDKITE_BRANCH": "buildkite-master",
+			},
+			"buildkite-master",
+		},
+		{
+			"only DRONE_BRANCH defined",
+			map[string]string{
+				"DRONE_BRANCH": "drone-master",
+			},
+			"drone-master",
+		},
+		{
+			"GitHub Action push event",
+			map[string]string{
+				"GITHUB_REF": "refs/heads/github-master",
+			},
+			"github-master",
+		},
+		{
 			"no branch var defined",
 			map[string]string{},
 			"",
@@ -81,7 +118,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 }
 
 func resetBranchEnvs(values map[string]string) {
-	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH", "APPVEYOR_REPO_BRANCH", "WERCKER_GIT_BRANCH"} {
+	for _, envVar := range varNames {
 		os.Unsetenv(envVar)
 	}
 	for k, v := range values {

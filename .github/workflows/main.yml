@@ -1,0 +1,19 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - run: go get github.com/mattn/goveralls
+      - run: go get golang.org/x/tools/cmd/cover
+      - run: go vet
+      - run: go test -v -coverprofile=profile.cov .
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-profile: profile.cov
