@@ -324,19 +324,12 @@ func process() error {
 		return err
 	}
 
-	commitRef := "HEAD"
-	if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-		ghPR := getGithubEvent()["pull_request"].(map[string]interface{})
-		ghHead := ghPR["head"].(map[string]interface{})
-		commitRef = ghHead["sha"].(string)
-	}
-
 	j := Job{
 		RunAt:              time.Now(),
 		RepoToken:          repotoken,
 		ServicePullRequest: pullRequest,
 		Parallel:           parallel,
-		Git:                collectGitInfo(commitRef),
+		Git:                collectGitInfo("HEAD"),
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
 	}
