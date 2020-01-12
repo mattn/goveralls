@@ -111,7 +111,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 }
 
 func resetBranchEnvs(values map[string]string) {
-	for _, envVar := range []string{"CI_BRANCH", "CIRCLE_BRANCH", "GIT_BRANCH", "TRAVIS_BRANCH", "APPVEYOR_REPO_BRANCH", "WERCKER_GIT_BRANCH", "DRONE_BRANCH", "BUILDKITE_BRANCH", "BRANCH_NAME"} {
+	for _, envVar := range varNames {
 		os.Unsetenv(envVar)
 	}
 	for k, v := range values {
