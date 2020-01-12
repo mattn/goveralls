@@ -9,7 +9,7 @@ import (
 
 // A Head object encapsulates information about the HEAD revision of a git repo.
 type Head struct {
-	Id             string `json:"id"`
+	ID             string `json:"id"`
 	AuthorName     string `json:"author_name,omitempty"`
 	AuthorEmail    string `json:"author_email,omitempty"`
 	CommitterName  string `json:"committer_name,omitempty"`
@@ -62,7 +62,7 @@ func collectGitInfo(ref string) *Git {
 		results[key] = s
 	}
 	h := Head{
-		Id:             strings.Split(results["id"], "\n")[0],
+		ID:             strings.Split(results["id"], "\n")[0],
 		AuthorName:     strings.Split(results["aname"], "\n")[0],
 		AuthorEmail:    strings.Split(results["aemail"], "\n")[0],
 		CommitterName:  strings.Split(results["cname"], "\n")[0],
