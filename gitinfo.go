@@ -37,7 +37,9 @@ func collectGitInfo(ref string) *Git {
 	results := map[string]string{}
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("fail to look path of git: %v", err)
+		log.Print("git information is omitted")
+		return nil
 	}
 	for key, args := range gitCmds {
 		if key == "branch" {
