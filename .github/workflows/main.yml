@@ -33,7 +33,7 @@ jobs:
           path: src/github.com/mattn/goveralls
       - name: build
         run: |
-          go get ./..
+          go get ./...
           go install .
         working-directory: src/github.com/mattn/goveralls
       - name: test
