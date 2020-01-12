@@ -96,6 +96,13 @@ func TestLoadBranchFromEnv(t *testing.T) {
 			"drone-master",
 		},
 		{
+			"GitHub Action push event",
+			map[string]string{
+				"GITHUB_REF": "refs/heads/github-master",
+			},
+			"github-master",
+		},
+		{
 			"no branch var defined",
 			map[string]string{},
 			"",

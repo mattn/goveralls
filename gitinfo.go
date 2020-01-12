@@ -75,12 +75,23 @@ func collectGitInfo(ref string) *Git {
 }
 
 var varNames = [...]string{
-	"GIT_BRANCH", "GITHUB_REF", "CIRCLE_BRANCH", "TRAVIS_BRANCH", "CI_BRANCH", "APPVEYOR_REPO_BRANCH", "WERCKER_GIT_BRANCH", "DRONE_BRANCH", "BUILDKITE_BRANCH", "BRANCH_NAME",
+	"GIT_BRANCH",
+
+	// https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables
+	"GITHUB_HEAD_REF", "GITHUB_REF",
+
+	"CIRCLE_BRANCH", "TRAVIS_BRANCH",
+	"CI_BRANCH", "APPVEYOR_REPO_BRANCH",
+	"WERCKER_GIT_BRANCH", "DRONE_BRANCH",
+	"BUILDKITE_BRANCH", "BRANCH_NAME",
 }
 
 func loadBranchFromEnv() string {
 	for _, varName := range varNames {
 		if branch := os.Getenv(varName); branch != "" {
+			if varName == "GITHUB_REF" {
+				return strings.TrimPrefix(branch, "refs/heads/")
+			}
 			return branch
 		}
 	}
