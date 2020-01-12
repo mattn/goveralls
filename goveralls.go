@@ -90,6 +90,7 @@ type Job struct {
 	SourceFiles        []*SourceFile `json:"source_files"`
 	Parallel           *bool         `json:"parallel,omitempty"`
 	Git                *Git          `json:"git,omitempty"`
+	CommitSHA          string        `json:"commit_sha,omitempty"`
 	RunAt              time.Time     `json:"run_at"`
 }
 
@@ -289,6 +290,7 @@ func process() error {
 	if *repotoken == "" {
 		repotoken = nil // remove the entry from json
 	}
+	var sha string
 	var pullRequest string
 	if prNumber := os.Getenv("CIRCLE_PR_NUMBER"); prNumber != "" {
 		// for Circle CI (pull request from forked repo)
@@ -311,8 +313,10 @@ func process() error {
 	} else if prNumber := os.Getenv("CI_PR_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	} else if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-		number := getGithubEvent()["number"].(float64)
+		event := getGithubEvent()
+		number := event["number"].(float64)
 		pullRequest = strconv.Itoa(int(number))
+		sha = event["pull_request"].(map[string]interface{})["head"].(map[string]interface{})["sha"].(string)
 	}
 
 	if *service == "" && os.Getenv("TRAVIS_JOB_ID") != "" {
@@ -329,9 +333,10 @@ func process() error {
 		RepoToken:          repotoken,
 		ServicePullRequest: pullRequest,
 		Parallel:           parallel,
-		Git:                collectGitInfo("HEAD"),
-		SourceFiles:        sourceFiles,
-		ServiceName:        *service,
+		//		Git:                collectGitInfo("HEAD"),
+		CommitSHA:   sha,
+		SourceFiles: sourceFiles,
+		ServiceName: *service,
 	}
 
 	// Only include a job ID if it's known, otherwise, Coveralls looks
