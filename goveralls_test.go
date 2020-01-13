@@ -76,8 +76,8 @@ func TestCustomJobId(t *testing.T) {
 
 	jobBody := <-jobBodyChannel
 
-	if jobBody.ServiceJobId != "123abc" {
-		t.Fatalf("Expected job id of 123abc, but was %s", jobBody.ServiceJobId)
+	if jobBody.ServiceJobID != "123abc" {
+		t.Fatalf("Expected job id of 123abc, but was %s", jobBody.ServiceJobID)
 	}
 }
 
@@ -109,7 +109,7 @@ func TestVerboseArg(t *testing.T) {
 		}
 
 		if !strings.Contains(string(b), "--- PASS") {
-			t.Error("Expected to have verbosed go test output in stdout", string(b))
+			t.Error("Expected to have verbose go test output in stdout", string(b))
 		}
 	})
 
@@ -122,7 +122,7 @@ func TestVerboseArg(t *testing.T) {
 		}
 
 		if strings.Contains(string(b), "--- PASS") {
-			t.Error("Expected to haven't verbosed go test output in stdout", string(b))
+			t.Error("Expected to haven't verbose go test output in stdout", string(b))
 		}
 	})
 }

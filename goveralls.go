@@ -32,12 +32,15 @@ import (
 	https://coveralls.io/docs/api_reference
 */
 
+// Flags are extra flags to the tests
 type Flags []string
 
+// String implements flag.Value interface.
 func (a *Flags) String() string {
 	return strings.Join(*a, ",")
 }
 
+// Set implements flag.Value interface.
 func (a *Flags) Set(value string) error {
 	*a = append(*a, value)
 	return nil
@@ -60,7 +63,7 @@ var (
 	ignore      = flag.String("ignore", "", "Comma separated files to ignore")
 	insecure    = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
 	show        = flag.Bool("show", false, "Show which package is being tested")
-	customJobId = flag.String("jobid", "", "Custom set job token")
+	customJobID = flag.String("jobid", "", "Custom set job token")
 	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
 
 	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
@@ -86,7 +89,7 @@ type SourceFile struct {
 // A Job represents the coverage data from a single run of a test suite.
 type Job struct {
 	RepoToken          *string       `json:"repo_token,omitempty"`
-	ServiceJobId       string        `json:"service_job_id"`
+	ServiceJobID       string        `json:"service_job_id"`
 	ServiceJobNumber   string        `json:"service_job_number,omitempty"`
 	ServicePullRequest string        `json:"service_pull_request,omitempty"`
 	ServiceName        string        `json:"service_name"`
@@ -214,12 +217,10 @@ func findRepositoryRoot(dir string) (string, bool) {
 }
 
 func getCoverallsSourceFileName(name string) string {
-	if dir, ok := findRepositoryRoot(name); !ok {
-		return filepath.ToSlash(name)
-	} else {
-		filename := strings.TrimPrefix(name, dir+string(os.PathSeparator))
-		return filepath.ToSlash(filename)
+	if dir, ok := findRepositoryRoot(name); ok {
+		name = strings.TrimPrefix(name, dir+string(os.PathSeparator))
 	}
+	return filepath.ToSlash(name)
 }
 
 // processParallelFinish notifies coveralls that all jobs are completed
@@ -308,41 +309,41 @@ func process() error {
 
 	// flags are never nil, so no nil check needed
 	githubEvent := getGithubEvent()
-	var jobId string
-	if *customJobId != "" {
-		jobId = *customJobId
-	} else if serviceJobId := os.Getenv("COVERALLS_SERVICE_JOB_ID"); serviceJobId != "" {
-		jobId = serviceJobId
-	} else if travisJobId := os.Getenv("TRAVIS_JOB_ID"); travisJobId != "" {
-		jobId = travisJobId
-	} else if circleCiJobId := os.Getenv("CIRCLE_BUILD_NUM"); circleCiJobId != "" {
-		jobId = circleCiJobId
-	} else if appveyorJobId := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobId != "" {
-		jobId = appveyorJobId
-	} else if semaphoreJobId := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphoreJobId != "" {
-		jobId = semaphoreJobId
-	} else if jenkinsJobId := os.Getenv("BUILD_NUMBER"); jenkinsJobId != "" {
-		jobId = jenkinsJobId
-	} else if buildId := os.Getenv("BUILDKITE_BUILD_ID"); buildId != "" {
-		jobId = buildId
+	var jobID string
+	if *customJobID != "" {
+		jobID = *customJobID
+	} else if ServiceJobID := os.Getenv("COVERALLS_SERVICE_JOB_ID"); ServiceJobID != "" {
+		jobID = ServiceJobID
+	} else if travisjobID := os.Getenv("TRAVIS_JOB_ID"); travisjobID != "" {
+		jobID = travisjobID
+	} else if circleCIJobID := os.Getenv("CIRCLE_BUILD_NUM"); circleCIJobID != "" {
+		jobID = circleCIJobID
+	} else if appveyorJobID := os.Getenv("APPVEYOR_JOB_ID"); appveyorJobID != "" {
+		jobID = appveyorJobID
+	} else if semaphorejobID := os.Getenv("SEMAPHORE_BUILD_NUMBER"); semaphorejobID != "" {
+		jobID = semaphorejobID
+	} else if jenkinsjobID := os.Getenv("BUILD_NUMBER"); jenkinsjobID != "" {
+		jobID = jenkinsjobID
+	} else if buildID := os.Getenv("BUILDKITE_BUILD_ID"); buildID != "" {
+		jobID = buildID
 	} else if droneBuildNumber := os.Getenv("DRONE_BUILD_NUMBER"); droneBuildNumber != "" {
-		jobId = droneBuildNumber
+		jobID = droneBuildNumber
 	} else if buildkiteBuildNumber := os.Getenv("BUILDKITE_BUILD_NUMBER"); buildkiteBuildNumber != "" {
-		jobId = buildkiteBuildNumber
-	} else if codeshipJobId := os.Getenv("CI_BUILD_ID"); codeshipJobId != "" {
-		jobId = codeshipJobId
-	} else if githubSha := os.Getenv("GITHUB_SHA"); githubSha != "" {
-		githubShortSha := githubSha[0:9]
+		jobID = buildkiteBuildNumber
+	} else if codeshipjobID := os.Getenv("CI_BUILD_ID"); codeshipjobID != "" {
+		jobID = codeshipjobID
+	} else if githubSHA := os.Getenv("GITHUB_SHA"); githubSHA != "" {
+		githubShortSha := githubSHA[0:9]
 		if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
 			number := githubEvent["number"].(float64)
-			jobId = fmt.Sprintf(`%s-PR-%d`, githubShortSha, int(number))
+			jobID = fmt.Sprintf(`%s-PR-%d`, githubShortSha, int(number))
 		} else {
-			jobId = githubShortSha
+			jobID = githubShortSha
 		}
 	}
 
 	if *parallelFinish {
-		return processParallelFinish(jobId, *repotoken)
+		return processParallelFinish(jobID, *repotoken)
 	}
 
 	if *repotoken == "" {
@@ -401,8 +402,8 @@ func process() error {
 
 	// Only include a job ID if it's known, otherwise, Coveralls looks
 	// for the job and can't find it.
-	if jobId != "" {
-		j.ServiceJobId = jobId
+	if jobID != "" {
+		j.ServiceJobID = jobID
 	}
 	j.ServiceJobNumber = *jobNumber
 
