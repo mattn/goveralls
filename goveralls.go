@@ -90,7 +90,6 @@ type Job struct {
 	SourceFiles        []*SourceFile `json:"source_files"`
 	Parallel           *bool         `json:"parallel,omitempty"`
 	Git                *Git          `json:"git,omitempty"`
-	CommitSHA          string        `json:"commit_sha,omitempty"`
 	RunAt              time.Time     `json:"run_at"`
 }
 
@@ -254,6 +253,7 @@ func process() error {
 	//
 
 	// flags are never nil, so no nil check needed
+	githubEvent := getGithubEvent()
 	var jobId string
 	if *customJobId != "" {
 		jobId = *customJobId
@@ -280,7 +280,7 @@ func process() error {
 	} else if githubSha := os.Getenv("GITHUB_SHA"); githubSha != "" {
 		githubShortSha := githubSha[0:9]
 		if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-			number := getGithubEvent()["number"].(float64)
+			number := githubEvent["number"].(float64)
 			jobId = fmt.Sprintf(`%s-PR-%d`, githubShortSha, int(number))
 		} else {
 			jobId = githubShortSha
@@ -290,7 +290,8 @@ func process() error {
 	if *repotoken == "" {
 		repotoken = nil // remove the entry from json
 	}
-	var sha string
+
+	head := "HEAD"
 	var pullRequest string
 	if prNumber := os.Getenv("CIRCLE_PR_NUMBER"); prNumber != "" {
 		// for Circle CI (pull request from forked repo)
@@ -313,10 +314,12 @@ func process() error {
 	} else if prNumber := os.Getenv("CI_PR_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	} else if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-		event := getGithubEvent()
-		number := event["number"].(float64)
+		number := githubEvent["number"].(float64)
 		pullRequest = strconv.Itoa(int(number))
-		sha = event["pull_request"].(map[string]interface{})["head"].(map[string]interface{})["sha"].(string)
+
+		ghPR := githubEvent["pull_request"].(map[string]interface{})
+		ghHead := ghPR["head"].(map[string]interface{})
+		head = ghHead["sha"].(string)
 	}
 
 	if *service == "" && os.Getenv("TRAVIS_JOB_ID") != "" {
@@ -333,10 +336,9 @@ func process() error {
 		RepoToken:          repotoken,
 		ServicePullRequest: pullRequest,
 		Parallel:           parallel,
-		//		Git:                collectGitInfo("HEAD"),
-		CommitSHA:   sha,
-		SourceFiles: sourceFiles,
-		ServiceName: *service,
+		Git:                collectGitInfo(head),
+		SourceFiles:        sourceFiles,
+		ServiceName:        *service,
 	}
 
 	// Only include a job ID if it's known, otherwise, Coveralls looks

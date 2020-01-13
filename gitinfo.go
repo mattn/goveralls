@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"os"
 	"os/exec"
@@ -41,6 +42,14 @@ func collectGitInfo(ref string) *Git {
 		log.Print("git information is omitted")
 		return nil
 	}
+
+	if ref != "HEAD" {
+		// make sure that the commit is in the local
+		// e.g. shallow cloned repository
+		_, _ = runCommand(gitPath, "fetch", "--depth=1", "origin", ref)
+		// ignore errors because we don't have enough information about the origin.
+	}
+
 	for key, args := range gitCmds {
 		if key == "branch" {
 			if envBranch := loadBranchFromEnv(); envBranch != "" {
@@ -49,31 +58,44 @@ func collectGitInfo(ref string) *Git {
 			}
 		}
 
-		cmd := exec.Command(gitPath, args...)
-		ret, err := cmd.CombinedOutput()
+		ret, err := runCommand(gitPath, args...)
 		if err != nil {
-			if strings.Contains(string(ret), `Not a git repository`) {
-				return nil
-			}
-			log.Fatalf("%v: %v", err, string(ret))
+			log.Printf(`fail to run "%s %s": %v`, gitPath, strings.Join(args, " "), err)
+			log.Print("git information is omitted")
+			return nil
 		}
-		s := string(ret)
-		s = strings.TrimRight(s, "\n")
-		results[key] = s
+		results[key] = ret
 	}
 	h := Head{
-		ID:             strings.Split(results["id"], "\n")[0],
-		AuthorName:     strings.Split(results["aname"], "\n")[0],
-		AuthorEmail:    strings.Split(results["aemail"], "\n")[0],
-		CommitterName:  strings.Split(results["cname"], "\n")[0],
-		CommitterEmail: strings.Split(results["cemail"], "\n")[0],
+		ID:             firstLine(results["id"]),
+		AuthorName:     firstLine(results["aname"]),
+		AuthorEmail:    firstLine(results["aemail"]),
+		CommitterName:  firstLine(results["cname"]),
+		CommitterEmail: firstLine(results["cemail"]),
 		Message:        results["message"],
 	}
 	g := &Git{
 		Head:   h,
-		Branch: strings.Split(results["branch"], "\n")[0],
+		Branch: firstLine(results["branch"]),
 	}
 	return g
+}
+
+func runCommand(gitPath string, args ...string) (string, error) {
+	cmd := exec.Command(gitPath, args...)
+	ret, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	ret = bytes.TrimRight(ret, "\n")
+	return string(ret), nil
+}
+
+func firstLine(s string) string {
+	if idx := strings.Index(s, "\n"); idx >= 0 {
+		return s[:idx]
+	}
+	return s
 }
 
 var varNames = [...]string{
