@@ -40,6 +40,9 @@ test suite.
 
 ## Github Actions
 
+[shogo82148/actions-goveralls](https://github.com/marketplace/actions/actions-goveralls) is available on GitHub Marketplace.
+It provides the shorthand of the GitHub Actions YAML configure.
+
 ```yaml
 name: Quality
 on: [push, pull_request]
@@ -66,6 +69,11 @@ jobs:
       run: |
         GO111MODULE=off go get github.com/mattn/goveralls
         $(go env GOPATH)/bin/goveralls -coverprofile=profile.cov -service=github
+    # or use shogo82148/actions-goveralls
+    # - name: Send coverage
+    #   uses: shogo82148/actions-goveralls@v1
+    #   with:
+    #     path-to-profile: profile.cov
 ```
 
 ### Test with Legacy GOPATH mode
