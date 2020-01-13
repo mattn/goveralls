@@ -52,6 +52,7 @@ var (
 	coverprof   = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
 	covermode   = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken   = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	reponame    = flag.String("reponame", "", "Repository name")
 	parallel    = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
 	endpoint    = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service     = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
@@ -61,6 +62,8 @@ var (
 	show        = flag.Bool("show", false, "Show which package is being tested")
 	customJobId = flag.String("jobid", "", "Custom set job token")
 	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
+
+	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
 )
 
 // usage supplants package flag's Usage variable
@@ -100,7 +103,12 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
-// getPkgs returns packages for mesuring coverage. Returned packages doesn't
+// A WebHookResponse is returned by the Coveralls.io WebHook.
+type WebHookResponse struct {
+	Done bool `json:"done"`
+}
+
+// getPkgs returns packages for measuring coverage. Returned packages doesn't
 // contain vendor packages.
 func getPkgs(pkg string) ([]string, error) {
 	if pkg == "" {
@@ -214,6 +222,52 @@ func getCoverallsSourceFileName(name string) string {
 	}
 }
 
+// processParallelFinish notifies coveralls that all jobs are completed
+// ref. https://docs.coveralls.io/parallel-build-webhook
+func processParallelFinish(jobID, token string) error {
+	var name string
+	if reponame != nil && *reponame != "" {
+		name = *reponame
+	} else if s := os.Getenv("GITHUB_REPOSITORY"); s != "" {
+		name = s
+	}
+
+	params := make(url.Values)
+	params.Set("repo_token", token)
+	params.Set("repo_name", name)
+	params.Set("payload[build_num]", jobID)
+	params.Set("payload[status]", "done")
+	res, err := http.PostForm(*endpoint+"/webhook", params)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("Unable to read response body from coveralls: %s", err)
+	}
+
+	if res.StatusCode >= http.StatusInternalServerError && *shallow {
+		fmt.Println("coveralls server failed internally")
+		return nil
+	}
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("Bad response status from coveralls: %d\n%s", res.StatusCode, bodyBytes)
+	}
+
+	var response WebHookResponse
+	if err = json.Unmarshal(bodyBytes, &response); err != nil {
+		return fmt.Errorf("Unable to unmarshal response JSON from coveralls: %s\n%s", err, bodyBytes)
+	}
+
+	if !response.Done {
+		return fmt.Errorf("jobs are not completed:\n%s", bodyBytes)
+	}
+
+	return nil
+}
+
 func process() error {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	//
@@ -253,6 +307,7 @@ func process() error {
 	//
 
 	// flags are never nil, so no nil check needed
+	githubEvent := getGithubEvent()
 	var jobId string
 	if *customJobId != "" {
 		jobId = *customJobId
@@ -279,16 +334,22 @@ func process() error {
 	} else if githubSha := os.Getenv("GITHUB_SHA"); githubSha != "" {
 		githubShortSha := githubSha[0:9]
 		if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-			number := getGithubEvent()["number"].(float64)
+			number := githubEvent["number"].(float64)
 			jobId = fmt.Sprintf(`%s-PR-%d`, githubShortSha, int(number))
 		} else {
 			jobId = githubShortSha
 		}
 	}
 
+	if *parallelFinish {
+		return processParallelFinish(jobId, *repotoken)
+	}
+
 	if *repotoken == "" {
 		repotoken = nil // remove the entry from json
 	}
+
+	head := "HEAD"
 	var pullRequest string
 	if prNumber := os.Getenv("CIRCLE_PR_NUMBER"); prNumber != "" {
 		// for Circle CI (pull request from forked repo)
@@ -311,8 +372,12 @@ func process() error {
 	} else if prNumber := os.Getenv("CI_PR_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	} else if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-		number := getGithubEvent()["number"].(float64)
+		number := githubEvent["number"].(float64)
 		pullRequest = strconv.Itoa(int(number))
+
+		ghPR := githubEvent["pull_request"].(map[string]interface{})
+		ghHead := ghPR["head"].(map[string]interface{})
+		head = ghHead["sha"].(string)
 	}
 
 	if *service == "" && os.Getenv("TRAVIS_JOB_ID") != "" {
@@ -329,7 +394,7 @@ func process() error {
 		RepoToken:          repotoken,
 		ServicePullRequest: pullRequest,
 		Parallel:           parallel,
-		Git:                collectGitInfo("HEAD"),
+		Git:                collectGitInfo(head),
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
 	}

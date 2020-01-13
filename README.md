@@ -59,9 +59,6 @@ jobs:
         go-version: 1.13
     - name: Check out code
       uses: actions/checkout@v2
-      with:
-        # Checkout pull request HEAD commit instead of merge commit
-        ref: ${{ github.event.pull_request.head.sha }}
     - name: Install dependencies
       run: |
         go mod download
@@ -82,7 +79,7 @@ jobs:
 
 Enable Travis-CI on your github repository settings.
 
-For a **public** github repository put below's `.travis.yml`.
+For a **public** github repository put bellow's `.travis.yml`.
 
 ```yml
 language: go
@@ -96,7 +93,7 @@ script:
 
 For a **public** github repository, it is not necessary to define your repository key (`COVERALLS_TOKEN`).
 
-For a **private** github repository put below's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
+For a **private** github repository put bellow's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
 
 ```yml
 language: go

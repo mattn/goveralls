@@ -3,17 +3,57 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        go:
+          - '1.7'  # minimum version that macos-latest supports
+          - '1.10' # last version that doesn't support go modules
+          - '1.11' # first version that supports go modules
+          - '1.x'  # latest version
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v1
-      - run: go get github.com/mattn/goveralls
-      - run: go get golang.org/x/tools/cmd/cover
-      - run: go vet
-      - run: go test -v -coverprofile=profile.cov .
-      - uses: shogo82148/actions-goveralls@v1
+      - name: Set up Go ${{ matrix.go }}
+        uses: actions/setup-go@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-profile: profile.cov
+          go-version: ${{ matrix.go }}
+      - run: go version
+      - name: Set up GOPATH
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      - uses: actions/checkout@v2
+        with:
+          path: src/github.com/mattn/goveralls
+      - name: build
+        run: |
+          go get ./...
+          go install .
+        working-directory: src/github.com/mattn/goveralls
+      - name: test
+        run: goveralls -service=github -parallel
+        working-directory: src/github.com/mattn/goveralls
+        env:
+          COVERALLS_TOKEN: ${{ github.token }}
+
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.x'
+      - uses: actions/checkout@v2
+      - name: finish
+        run: |
+          go run github.com/mattn/goveralls -parallel-finish
+        env:
+          COVERALLS_TOKEN: ${{ github.token }}
