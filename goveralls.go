@@ -102,6 +102,11 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
+// A WebHookResponse is returned by the Coveralls.io WebHook.
+type WebHookResponse struct {
+	Done bool `json:"done"`
+}
+
 // getPkgs returns packages for measuring coverage. Returned packages doesn't
 // contain vendor packages.
 func getPkgs(pkg string) ([]string, error) {
@@ -241,6 +246,16 @@ func processParallelFinish(jobID, token string) error {
 	if res.StatusCode != 200 {
 		return fmt.Errorf("Bad response status from coveralls: %d\n%s", res.StatusCode, bodyBytes)
 	}
+
+	var response WebHookResponse
+	if err = json.Unmarshal(bodyBytes, &response); err != nil {
+		return fmt.Errorf("Unable to unmarshal response JSON from coveralls: %s\n%s", err, bodyBytes)
+	}
+
+	if !response.Done {
+		return fmt.Errorf("jobs are not completed:\n%s", bodyBytes)
+	}
+
 	return nil
 }
 
