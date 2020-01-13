@@ -59,9 +59,6 @@ jobs:
         go-version: 1.13
     - name: Check out code
       uses: actions/checkout@v2
-      with:
-        # Checkout pull request HEAD commit instead of merge commit
-        ref: ${{ github.event.pull_request.head.sha }}
     - name: Install dependencies
       run: |
         go mod download
