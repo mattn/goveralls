@@ -63,7 +63,7 @@ var (
 	ignore      = flag.String("ignore", "", "Comma separated files to ignore")
 	insecure    = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
 	show        = flag.Bool("show", false, "Show which package is being tested")
-	customJobID = flag.String("jobID", "", "Custom set job token")
+	customJobID = flag.String("jobid", "", "Custom set job token")
 	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
 
 	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
