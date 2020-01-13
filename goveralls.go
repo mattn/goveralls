@@ -61,6 +61,8 @@ var (
 	show        = flag.Bool("show", false, "Show which package is being tested")
 	customJobId = flag.String("jobid", "", "Custom set job token")
 	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
+
+	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
 )
 
 // usage supplants package flag's Usage variable
@@ -214,6 +216,34 @@ func getCoverallsSourceFileName(name string) string {
 	}
 }
 
+// processParallelFinish notifies coveralls that all jobs are completed
+// ref. https://docs.coveralls.io/parallel-build-webhook
+func processParallelFinish(jobID, token string) error {
+	params := make(url.Values)
+	params.Set("repo_token", token)
+	params.Set("payload[build_num]", jobID)
+	params.Set("payload[status]", "done")
+	res, err := http.PostForm(*endpoint+"/webhook", params)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("Unable to read response body from coveralls: %s", err)
+	}
+
+	if res.StatusCode >= http.StatusInternalServerError && *shallow {
+		fmt.Println("coveralls server failed internally")
+		return nil
+	}
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("Bad response status from coveralls: %d\n%s", res.StatusCode, bodyBytes)
+	}
+	return nil
+}
+
 func process() error {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 	//
@@ -285,6 +315,10 @@ func process() error {
 		} else {
 			jobId = githubShortSha
 		}
+	}
+
+	if *parallelFinish {
+		return processParallelFinish(jobId, *repotoken)
 	}
 
 	if *repotoken == "" {

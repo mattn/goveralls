@@ -37,7 +37,21 @@ jobs:
           go install .
         working-directory: src/github.com/mattn/goveralls
       - name: test
-        run: goveralls -service=github
+        run: goveralls -service=github -parallel
         working-directory: src/github.com/mattn/goveralls
+        env:
+          COVERALLS_TOKEN: ${{ github.token }}
+
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.x'
+      - name: finish
+        run: |
+          go run github.com/mattn/goveralls -parallel-finish
         env:
           COVERALLS_TOKEN: ${{ github.token }}
