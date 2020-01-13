@@ -226,6 +226,7 @@ func getCoverallsSourceFileName(name string) string {
 func processParallelFinish(jobID, token string) error {
 	params := make(url.Values)
 	params.Set("repo_token", token)
+	params.Set("repo_name", os.Getenv("GITHUB_REPOSITORY"))
 	params.Set("payload[build_num]", jobID)
 	params.Set("payload[status]", "done")
 	res, err := http.PostForm(*endpoint+"/webhook", params)
