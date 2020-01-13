@@ -52,6 +52,7 @@ var (
 	coverprof   = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
 	covermode   = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken   = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	reponame    = flag.String("reponame", "", "Repository name")
 	parallel    = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
 	endpoint    = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service     = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
@@ -224,9 +225,16 @@ func getCoverallsSourceFileName(name string) string {
 // processParallelFinish notifies coveralls that all jobs are completed
 // ref. https://docs.coveralls.io/parallel-build-webhook
 func processParallelFinish(jobID, token string) error {
+	var name string
+	if reponame != nil && *reponame != "" {
+		name = *reponame
+	} else if s := os.Getenv("GITHUB_REPOSITORY"); s != "" {
+		name = s
+	}
+
 	params := make(url.Values)
 	params.Set("repo_token", token)
-	params.Set("repo_name", os.Getenv("GITHUB_REPOSITORY"))
+	params.Set("repo_name", name)
 	params.Set("payload[build_num]", jobID)
 	params.Set("payload[status]", "done")
 	res, err := http.PostForm(*endpoint+"/webhook", params)
