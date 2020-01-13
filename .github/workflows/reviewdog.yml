@@ -26,4 +26,3 @@ jobs:
           github_token: ${{ secrets.github_token }}
           level: warning
           locale: "US"
-  
