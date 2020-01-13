@@ -24,7 +24,8 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - run: go version
-      - run: |
+      - name: Set up GOPATH
+        run: |
           echo "::set-env name=GOPATH::${{ github.workspace }}"
           echo "::add-path::${{ github.workspace }}/bin"
 
@@ -50,6 +51,7 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: '1.x'
+      - uses: actions/checkout@v2
       - name: finish
         run: |
           go run github.com/mattn/goveralls -parallel-finish
