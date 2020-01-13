@@ -82,7 +82,7 @@ jobs:
 
 Enable Travis-CI on your github repository settings.
 
-For a **public** github repository put below's `.travis.yml`.
+For a **public** github repository put bellow's `.travis.yml`.
 
 ```yml
 language: go
@@ -96,7 +96,7 @@ script:
 
 For a **public** github repository, it is not necessary to define your repository key (`COVERALLS_TOKEN`).
 
-For a **private** github repository put below's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
+For a **private** github repository put bellow's `.travis.yml`. If you use **travis pro**, you need to specify `-service=travis-pro` instead of `-service=travis-ci`.
 
 ```yml
 language: go

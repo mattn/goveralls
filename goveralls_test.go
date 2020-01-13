@@ -165,7 +165,7 @@ func TestRaceArg(t *testing.T) {
 	})
 }
 
-/* FIXME: currently this dones't work because the command goveralls will run
+/* FIXME: currently this doesn't work because the command goveralls will run
  * another session for this session.
 func TestGoveralls(t *testing.T) {
 	wd, _ := os.Getwd()
@@ -180,7 +180,7 @@ func TestGoveralls(t *testing.T) {
 	lines := strings.Split(strings.TrimSpace(string(b)), "\n")
 	s := lines[len(lines)-1]
 	if s != "Succeeded" {
-		t.Fatalf("Expected test of tester are succeeded, but failured")
+		t.Fatalf("Expected test of tester are succeeded, but failed")
 	}
 }
 */

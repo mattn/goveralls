@@ -102,7 +102,7 @@ type Response struct {
 	Error   bool   `json:"error"`
 }
 
-// getPkgs returns packages for mesuring coverage. Returned packages doesn't
+// getPkgs returns packages for measuring coverage. Returned packages doesn't
 // contain vendor packages.
 func getPkgs(pkg string) ([]string, error) {
 	if pkg == "" {
