@@ -13,6 +13,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/build"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	"time"
 
 	"golang.org/x/tools/cover"
+	"golang.org/x/tools/go/buildutil"
 )
 
 /*
@@ -68,6 +70,10 @@ var (
 
 	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
 )
+
+func init() {
+	flag.Var((*buildutil.TagsFlag)(&build.Default.BuildTags), "tags", buildutil.TagsFlagDoc)
+}
 
 // usage supplants package flag's Usage variable
 var usage = func() {
