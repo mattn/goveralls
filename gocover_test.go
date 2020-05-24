@@ -15,37 +15,37 @@ func TestMergeProfs(t *testing.T) {
 		// empty
 		{in: nil, want: nil},
 		// The number of profiles is 1
-		{in: [][]*cover.Profile{[]*cover.Profile{{FileName: "name1"}}}, want: []*cover.Profile{{FileName: "name1"}}},
+		{in: [][]*cover.Profile{{{FileName: "name1"}}}, want: []*cover.Profile{{FileName: "name1"}}},
 		// merge profile blocks
 		{
 			in: [][]*cover.Profile{
-				[]*cover.Profile{}, // skip first empty profiles.
-				[]*cover.Profile{
+				{}, // skip first empty profiles.
+				{
 					{
 						FileName: "name1",
 						Blocks: []cover.ProfileBlock{
-							cover.ProfileBlock{StartLine: 1, StartCol: 1, Count: 1},
+							{StartLine: 1, StartCol: 1, Count: 1},
 						},
 					},
 					{
 						FileName: "name2",
 						Blocks: []cover.ProfileBlock{
-							cover.ProfileBlock{StartLine: 1, StartCol: 1, Count: 0},
+							{StartLine: 1, StartCol: 1, Count: 0},
 						},
 					},
 				},
-				[]*cover.Profile{}, // skip first empty profiles.
-				[]*cover.Profile{
+				{}, // skip first empty profiles.
+				{
 					{
 						FileName: "name1",
 						Blocks: []cover.ProfileBlock{
-							cover.ProfileBlock{StartLine: 1, StartCol: 1, Count: 1},
+							{StartLine: 1, StartCol: 1, Count: 1},
 						},
 					},
 					{
 						FileName: "name2",
 						Blocks: []cover.ProfileBlock{
-							cover.ProfileBlock{StartLine: 1, StartCol: 1, Count: 1},
+							{StartLine: 1, StartCol: 1, Count: 1},
 						},
 					},
 				},
@@ -54,13 +54,13 @@ func TestMergeProfs(t *testing.T) {
 				{
 					FileName: "name1",
 					Blocks: []cover.ProfileBlock{
-						cover.ProfileBlock{StartLine: 1, StartCol: 1, Count: 2},
+						{StartLine: 1, StartCol: 1, Count: 2},
 					},
 				},
 				{
 					FileName: "name2",
 					Blocks: []cover.ProfileBlock{
-						cover.ProfileBlock{StartLine: 1, StartCol: 1, Count: 1},
+						{StartLine: 1, StartCol: 1, Count: 1},
 					},
 				},
 			},
