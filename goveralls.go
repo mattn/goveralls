@@ -67,6 +67,7 @@ var (
 	show        = flag.Bool("show", false, "Show which package is being tested")
 	customJobID = flag.String("jobid", "", "Custom set job token")
 	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
+	flagName    = flag.String("flagname", os.Getenv("COVERALLS_FLAG_NAME"), "Job flag name, e.g. \"Unit\", \"Functional\", or \"Integration\". Will be shown in the Coveralls UI.")
 
 	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
 )
@@ -99,6 +100,7 @@ type Job struct {
 	ServiceJobNumber   string        `json:"service_job_number,omitempty"`
 	ServicePullRequest string        `json:"service_pull_request,omitempty"`
 	ServiceName        string        `json:"service_name"`
+	FlagName           string        `json:"flag_name,omitempty"`
 	SourceFiles        []*SourceFile `json:"source_files"`
 	Parallel           *bool         `json:"parallel,omitempty"`
 	Git                *Git          `json:"git,omitempty"`
@@ -398,6 +400,7 @@ func process() error {
 		Git:                collectGitInfo(head),
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
+		FlagName:           *flagName,
 	}
 
 	// Only include a job ID if it's known, otherwise, Coveralls looks
