@@ -38,7 +38,7 @@ jobs:
           go install .
         working-directory: src/github.com/mattn/goveralls
       - name: test
-        run: goveralls -service=github -parallel -flagname="Unit-$GITHUB_RUN_NUMBER"
+        run: goveralls -service=github -parallel -flagname="Unit-${{ matrix.os }}-Go-${{ matrix.go }}"
         working-directory: src/github.com/mattn/goveralls
         env:
           COVERALLS_TOKEN: ${{ github.token }}
