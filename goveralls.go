@@ -338,14 +338,8 @@ func process() error {
 		jobID = buildkiteBuildNumber
 	} else if codeshipjobID := os.Getenv("CI_BUILD_ID"); codeshipjobID != "" {
 		jobID = codeshipjobID
-	} else if githubSHA := os.Getenv("GITHUB_SHA"); githubSHA != "" {
-		githubShortSha := githubSHA[0:9]
-		if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
-			number := githubEvent["number"].(float64)
-			jobID = fmt.Sprintf(`%s-PR-%d`, githubShortSha, int(number))
-		} else {
-			jobID = githubShortSha
-		}
+	} else if githubRunID := os.Getenv("GITHUB_RUN_ID"); githubRunID != "" {
+		jobID = githubRunID
 	}
 
 	if *parallelFinish {
