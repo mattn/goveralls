@@ -49,27 +49,27 @@ func (a *Flags) Set(value string) error {
 }
 
 var (
-	extraFlags  Flags
-	pkg         = flag.String("package", "", "Go package")
-	verbose     = flag.Bool("v", false, "Pass '-v' argument to 'go test' and output to stdout")
-	race        = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
-	debug       = flag.Bool("debug", false, "Enable debug output")
-	coverprof   = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
-	covermode   = flag.String("covermode", "count", "sent as covermode argument to go test")
-	repotoken   = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
-	reponame    = flag.String("reponame", "", "Repository name")
-	parallel    = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
-	endpoint    = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
-	service     = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
-	shallow     = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
-	ignore      = flag.String("ignore", "", "Comma separated files to ignore")
-	insecure    = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
-	show        = flag.Bool("show", false, "Show which package is being tested")
-	customJobID = flag.String("jobid", "", "Custom set job token")
-	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
-	flagName    = flag.String("flagname", os.Getenv("COVERALLS_FLAG_NAME"), "Job flag name, e.g. \"Unit\", \"Functional\", or \"Integration\". Will be shown in the Coveralls UI.")
-
-	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
+	extraFlags          Flags
+	pkg                 = flag.String("package", "", "Go package")
+	verbose             = flag.Bool("v", false, "Pass '-v' argument to 'go test' and output to stdout")
+	race                = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
+	debug               = flag.Bool("debug", false, "Enable debug output")
+	coverprof           = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
+	covermode           = flag.String("covermode", "count", "sent as covermode argument to go test")
+	repotoken           = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	reponame            = flag.String("reponame", "", "Repository name")
+	parallel            = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
+	endpoint            = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
+	service             = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
+	shallow             = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
+	ignore              = flag.String("ignore", "", "Comma separated files to ignore")
+	insecure            = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
+	show                = flag.Bool("show", false, "Show which package is being tested")
+	customJobID         = flag.String("jobid", "", "Custom set job token")
+	jobNumber           = flag.String("jobnumber", "", "Custom set job number")
+	customServiceNumber = flag.String("servicenumber", "", "a number that uniquely identifies the build")
+	flagName            = flag.String("flagname", os.Getenv("COVERALLS_FLAG_NAME"), "Job flag name, e.g. \"Unit\", \"Functional\", or \"Integration\". Will be shown in the Coveralls UI.")
+	parallelFinish      = flag.Bool("parallel-finish", false, "finish parallel test")
 )
 
 func init() {
@@ -97,6 +97,7 @@ type SourceFile struct {
 type Job struct {
 	RepoToken          *string       `json:"repo_token,omitempty"`
 	ServiceJobID       string        `json:"service_job_id"`
+	ServiceNumber      string        `json:"service_number,omitempty"`
 	ServiceJobNumber   string        `json:"service_job_number,omitempty"`
 	ServicePullRequest string        `json:"service_pull_request,omitempty"`
 	ServiceName        string        `json:"service_name"`
@@ -387,6 +388,15 @@ func process() error {
 		*service = "travis-ci"
 	}
 
+	var serviceNumber string
+	if *customServiceNumber != "" {
+		serviceNumber = *customServiceNumber
+	} else if number := os.Getenv("COVERALLS_SERVICE_NUMBER"); number != "" {
+		serviceNumber = number
+	} else if number := os.Getenv("TRAVIS_BUILD_NUMBER"); number != "" {
+		serviceNumber = number
+	}
+
 	sourceFiles, err := getCoverage()
 	if err != nil {
 		return err
@@ -400,6 +410,7 @@ func process() error {
 		Git:                collectGitInfo(head),
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
+		ServiceNumber:      serviceNumber,
 		FlagName:           *flagName,
 	}
 
