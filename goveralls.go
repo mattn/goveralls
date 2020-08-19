@@ -58,6 +58,7 @@ var (
 	covermode   = flag.String("covermode", "count", "sent as covermode argument to go test")
 	repotoken   = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
 	reponame    = flag.String("reponame", "", "Repository name")
+	repotokenfile = flag.String("repotokenfile", os.Getenv("COVERALLS_TOKEN_FILE"), "Repository Token file on coveralls")
 	parallel    = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
 	endpoint    = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
 	service     = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
@@ -342,6 +343,14 @@ func process() error {
 		jobID = codeshipjobID
 	} else if githubRunID := os.Getenv("GITHUB_RUN_ID"); githubRunID != "" {
 		jobID = githubRunID
+	}
+
+	if *repotoken == "" && *repotokenfile != "" {
+		tokenBytes, err := ioutil.ReadFile(*repotokenfile)
+		if err != nil {
+			return err
+		}
+		*repotoken = strings.TrimSpace(string(tokenBytes))
 	}
 
 	if *parallelFinish {
