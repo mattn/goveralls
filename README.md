@@ -62,18 +62,20 @@ jobs:
         go mod download
     - name: Run Unit tests
       run: |
-        go test -race -covermode atomic -coverprofile=profile.cov ./...
+        go test -race -covermode atomic -coverprofile=covprofile ./...
+    - name: Install goveralls
+      env:
+        GO111MODULE: off
+      run: go get github.com/mattn/goveralls
     - name: Send coverage
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        GO111MODULE=off go get github.com/mattn/goveralls
-        $(go env GOPATH)/bin/goveralls -coverprofile=profile.cov -service=github
+      run: goveralls -coverprofile=covprofile -service=github
     # or use shogo82148/actions-goveralls
     # - name: Send coverage
     #   uses: shogo82148/actions-goveralls@v1
     #   with:
-    #     path-to-profile: profile.cov
+    #     path-to-profile: covprofile
 ```
 
 ### Test with Legacy GOPATH mode
@@ -108,14 +110,16 @@ jobs:
         path: src/example.com/owner/repo # add this
     - name: Run Unit tests
       run: |
-        go test -race -covermode atomic -coverprofile=profile.cov ./...
+        go test -race -covermode atomic -coverprofile=covprofile ./...
       working-directory: src/example.com/owner/repo # add this
+    - name: Install goveralls
+      env:
+        GO111MODULE: off
+      run: go get github.com/mattn/goveralls
     - name: Send coverage
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        GO111MODULE=off go get github.com/mattn/goveralls
-        $(go env GOPATH)/bin/goveralls -coverprofile=profile.cov -service=github
+      run: goveralls -coverprofile=covprofile -service=github
       working-directory: src/example.com/owner/repo # add this
 ```
 
