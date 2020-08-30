@@ -49,26 +49,26 @@ func (a *Flags) Set(value string) error {
 }
 
 var (
-	extraFlags  Flags
-	pkg         = flag.String("package", "", "Go package")
-	verbose     = flag.Bool("v", false, "Pass '-v' argument to 'go test' and output to stdout")
-	race        = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
-	debug       = flag.Bool("debug", false, "Enable debug output")
-	coverprof   = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
-	covermode   = flag.String("covermode", "count", "sent as covermode argument to go test")
-	repotoken   = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
-	reponame    = flag.String("reponame", "", "Repository name")
+	extraFlags    Flags
+	pkg           = flag.String("package", "", "Go package")
+	verbose       = flag.Bool("v", false, "Pass '-v' argument to 'go test' and output to stdout")
+	race          = flag.Bool("race", false, "Pass '-race' argument to 'go test'")
+	debug         = flag.Bool("debug", false, "Enable debug output")
+	coverprof     = flag.String("coverprofile", "", "If supplied, use a go cover profile (comma separated)")
+	covermode     = flag.String("covermode", "count", "sent as covermode argument to go test")
+	repotoken     = flag.String("repotoken", os.Getenv("COVERALLS_TOKEN"), "Repository Token on coveralls")
+	reponame      = flag.String("reponame", "", "Repository name")
 	repotokenfile = flag.String("repotokenfile", os.Getenv("COVERALLS_TOKEN_FILE"), "Repository Token file on coveralls")
-	parallel    = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
-	endpoint    = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
-	service     = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
-	shallow     = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
-	ignore      = flag.String("ignore", "", "Comma separated files to ignore")
-	insecure    = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
-	show        = flag.Bool("show", false, "Show which package is being tested")
-	customJobID = flag.String("jobid", "", "Custom set job token")
-	jobNumber   = flag.String("jobnumber", "", "Custom set job number")
-	flagName    = flag.String("flagname", os.Getenv("COVERALLS_FLAG_NAME"), "Job flag name, e.g. \"Unit\", \"Functional\", or \"Integration\". Will be shown in the Coveralls UI.")
+	parallel      = flag.Bool("parallel", os.Getenv("COVERALLS_PARALLEL") != "", "Submit as parallel")
+	endpoint      = flag.String("endpoint", "https://coveralls.io", "Hostname to submit Coveralls data to")
+	service       = flag.String("service", "", "The CI service or other environment in which the test suite was run. ")
+	shallow       = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
+	ignore        = flag.String("ignore", "", "Comma separated files to ignore")
+	insecure      = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
+	show          = flag.Bool("show", false, "Show which package is being tested")
+	customJobID   = flag.String("jobid", "", "Custom set job token")
+	jobNumber     = flag.String("jobnumber", "", "Custom set job number")
+	flagName      = flag.String("flagname", os.Getenv("COVERALLS_FLAG_NAME"), "Job flag name, e.g. \"Unit\", \"Functional\", or \"Integration\". Will be shown in the Coveralls UI.")
 
 	parallelFinish = flag.Bool("parallel-finish", false, "finish parallel test")
 )
@@ -123,10 +123,13 @@ type WebHookResponse struct {
 // getPkgs returns packages for measuring coverage. Returned packages doesn't
 // contain vendor packages.
 func getPkgs(pkg string) ([]string, error) {
+	argList := []string{"list"}
 	if pkg == "" {
-		pkg = "./..."
+		argList = append(argList, "./...")
+	} else {
+		argList = append(argList, strings.Split(pkg, " ")...)
 	}
-	out, err := exec.Command("go", "list", pkg).CombinedOutput()
+	out, err := exec.Command("go", argList...).CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
