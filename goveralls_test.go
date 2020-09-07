@@ -46,20 +46,6 @@ func fakeServerWithPayloadChannel(payload chan Job) *httptest.Server {
 	}))
 }
 
-func TestUsage(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
-	cmd := exec.Command("goveralls", "-h")
-	b, err := cmd.CombinedOutput()
-	if err == nil {
-		t.Fatal("Expected exit code 1 bot 0")
-	}
-	s := strings.Split(string(b), "\n")[0]
-	if !strings.HasPrefix(s, "Usage: goveralls ") {
-		t.Fatalf("Expected %v, but %v", "Usage: ", s)
-	}
-}
-
 func TestCustomJobId(t *testing.T) {
 	tmp := prepareTest(t)
 	defer os.RemoveAll(tmp)
