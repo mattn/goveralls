@@ -24,9 +24,6 @@ func fakeServer() *httptest.Server {
 
 func fakeServerWithPayloadChannel(payload chan Job) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// this is a standard baked response
-		fmt.Fprintln(w, `{"error":false,"message":"Fake message","URL":"http://fake.url"}`)
-
 		body, err := ioutil.ReadAll(r.Body)
 		// query params are used for the body payload
 		vals, err := url.ParseQuery(string(body))
@@ -44,6 +41,8 @@ func fakeServerWithPayloadChannel(payload chan Job) *httptest.Server {
 		payload <- job
 
 		w.WriteHeader(http.StatusOK)
+		// this is a standard baked response
+		fmt.Fprintln(w, `{"error":false,"message":"Fake message","URL":"http://fake.url"}`)
 	}))
 }
 
