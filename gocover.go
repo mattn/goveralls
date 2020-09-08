@@ -78,7 +78,7 @@ func mergeTwoProfBlock(left, right []cover.ProfileBlock) []cover.ProfileBlock {
 	ret := make([]cover.ProfileBlock, 0, len(left)+len(right))
 	for len(left) > 0 && len(right) > 0 {
 		a, b := left[0], right[0]
-		if a.StartLine == b.StartLine && a.StartCol == b.StartCol && a.EndLine == b.EndLine && b.EndCol == b.EndCol {
+		if a.StartLine == b.StartLine && a.StartCol == b.StartCol && a.EndLine == b.EndLine && a.EndCol == b.EndCol {
 			ret = append(ret, cover.ProfileBlock{
 				StartLine: a.StartLine,
 				StartCol:  a.StartCol,
