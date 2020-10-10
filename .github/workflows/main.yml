@@ -26,8 +26,8 @@ jobs:
       - run: go version
       - name: Set up GOPATH
         run: |
-          echo "::set-env name=GOPATH::${{ github.workspace }}"
-          echo "::add-path::${{ github.workspace }}/bin"
+          echo "GOPATH=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "${{ github.workspace }}/bin" >> "$GITHUB_PATH"
 
       - uses: actions/checkout@v2
         with:
