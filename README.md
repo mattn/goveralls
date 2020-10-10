@@ -93,34 +93,34 @@ jobs:
     name: Test with Coverage
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: '1.10'
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.10'
 
-    # add this step
-    - name: Set up GOPATH
-      run: |
-        echo "::set-env name=GOPATH::${{ github.workspace }}"
-        echo "::add-path::${{ github.workspace }}/bin"
+      # add this step
+      - name: Set up GOPATH
+        run: |
+          echo "GOPATH=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "${{ github.workspace }}/bin" >> "$GITHUB_PATH"
 
-    - name: Check out code
-      uses: actions/checkout@v2
-      with:
-        path: src/example.com/owner/repo # add this
-    - name: Run Unit tests
-      run: |
-        go test -race -covermode atomic -coverprofile=covprofile ./...
-      working-directory: src/example.com/owner/repo # add this
-    - name: Install goveralls
-      env:
-        GO111MODULE: off
-      run: go get github.com/mattn/goveralls
-    - name: Send coverage
-      env:
-        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: goveralls -coverprofile=covprofile -service=github
-      working-directory: src/example.com/owner/repo # add this
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: src/example.com/owner/repo # add this
+      - name: Run Unit tests
+        run: |
+          go test -race -covermode atomic -coverprofile=covprofile ./...
+        working-directory: src/example.com/owner/repo # add this
+      - name: Install goveralls
+        env:
+          GO111MODULE: off
+        run: go get github.com/mattn/goveralls
+      - name: Send coverage
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goveralls -coverprofile=covprofile -service=github
+        working-directory: src/example.com/owner/repo # add this
 ```
 
 ## Travis CI
