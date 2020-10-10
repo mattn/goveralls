@@ -25,6 +25,7 @@ jobs:
           go-version: ${{ matrix.go }}
       - run: go version
       - name: Set up GOPATH
+        shell: bash
         run: |
           echo "GOPATH=${{ github.workspace }}" >> "$GITHUB_ENV"
           echo "${{ github.workspace }}/bin" >> "$GITHUB_PATH"
