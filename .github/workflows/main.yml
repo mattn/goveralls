@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
       - run: go version
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: '1.x'
       - uses: actions/checkout@v2
