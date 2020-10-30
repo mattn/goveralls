@@ -9,11 +9,9 @@ package main
 // The rest is written by Dustin Sallings
 
 import (
-	"bytes"
 	"fmt"
 	"go/build"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -108,23 +106,33 @@ func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 	for _, prof := range profs {
 		path, err := findFile(prof.FileName)
 		if err != nil {
-			log.Fatalf("Can't find %v", err)
-		}
-		fb, err := ioutil.ReadFile(path)
-		if err != nil {
-			log.Fatalf("Error reading %v: %v", path, err)
+			return nil, fmt.Errorf("cannot find file %q: %v", prof.FileName, err)
 		}
 		sf := &SourceFile{
-			Name:     getCoverallsSourceFileName(path),
-			Source:   string(fb),
-			Coverage: make([]interface{}, 1+bytes.Count(fb, []byte{'\n'})),
+			Name: getCoverallsSourceFileName(path),
 		}
-
+		lineLookup := map[int]int{}
+		maxLineNo := 0
 		for _, block := range prof.Blocks {
 			for i := block.StartLine; i <= block.EndLine; i++ {
-				count, _ := sf.Coverage[i-1].(int)
-				sf.Coverage[i-1] = count + block.Count
+				lineLookup[i] += block.Count
 			}
+			if block.EndLine > maxLineNo {
+				maxLineNo = block.EndLine
+			}
+		}
+		sf.Coverage = make([]interface{}, maxLineNo)
+		for i := 1; i <= maxLineNo; i++ {
+			if c, ok := lineLookup[i]; ok {
+				sf.Coverage[i-1] = c
+			}
+		}
+		if *uploadSource {
+			fb, err := ioutil.ReadFile(path)
+			if err != nil {
+				return nil, fmt.Errorf("cannot read source of file %q: %v", path, err)
+			}
+			sf.Source = string(fb)
 		}
 
 		rv = append(rv, sf)
