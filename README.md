@@ -30,7 +30,7 @@ not have to specify it at each invocation.
 
 You can also run this reporter for multiple passes with the flag `-parallel` or
 by setting the environment variable `COVERALLS_PARALLEL=true` (see [coveralls
-docs](https://docs.coveralls.io/parallel-build-webhook) for more details.
+docs](https://docs.coveralls.io/parallel-build-webhook) for more details).
 
 
 # Continuous Integration
@@ -251,6 +251,36 @@ You can use the `-v` flag to see verbose output from the test suite:
 ```
 $ goveralls -v -service semaphore
 ```
+
+## Jenkins CI
+
+Add your Coveralls API token as a credential in Jenkins (see [Jenkins documentation](https://www.jenkins.io/doc/book/using/using-credentials/#configuring-credentials)).
+
+Then declare it as the environment variable `COVERALLS_TOKEN`:
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Test with coverage') {
+            steps {
+                sh 'go test ./... -coverprofile=coverage.txt -covermode=atomic'
+            }
+        }
+        stage('Upload to coveralls.io') {
+            environment {
+                COVERALLS_TOKEN     = credentials('coveralls-token')
+            }
+            steps {
+                sh 'goveralls -coverprofile=coverage.txt'
+            }
+        }
+    }
+}
+```
+
+See also [related Jenkins documentation](https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#for-secret-text-usernames-and-passwords-and-secret-files).
+
+It is also possible to let goveralls run the code coverage on its own without providing a coverage profile file.
 
 ## Coveralls Enterprise
 
