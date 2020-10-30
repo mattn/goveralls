@@ -257,7 +257,7 @@ $ goveralls -v -service semaphore
 Add your Coveralls API token as a credential in Jenkins (see [Jenkins documentation](https://www.jenkins.io/doc/book/using/using-credentials/#configuring-credentials)).
 
 Then declare it as the environment variable `COVERALLS_TOKEN`:
-```
+```groovy
 pipeline {
     agent any
     stages {
