@@ -298,7 +298,7 @@ func process() error {
 	flag.Parse()
 	if len(flag.Args()) > 0 {
 		flag.Usage()
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	//
