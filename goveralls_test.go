@@ -170,6 +170,46 @@ func TestGoveralls(t *testing.T) {
 }
 */
 
+func TestUploadSource(t *testing.T) {
+	tmp := prepareTest(t)
+	defer os.RemoveAll(tmp)
+	jobBodyChannel := make(chan Job, 8096)
+	fs := fakeServerWithPayloadChannel(jobBodyChannel)
+
+	t.Run("with uploadsource", func(t *testing.T) {
+		cmd := exec.Command("goveralls", "-uploadsource=true", "-package=github.com/mattn/goveralls/tester", "-endpoint")
+		cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatal("Expected exit code 0 got 1", err, string(b))
+		}
+
+		jobBody := <-jobBodyChannel
+
+		for _, sf := range jobBody.SourceFiles {
+			if len(sf.Source) == 0 {
+				t.Fatalf("expected source for %q to not be empty", sf.Name)
+			}
+		}
+	})
+
+	t.Run("without uploadsource", func(t *testing.T) {
+		cmd := exec.Command("goveralls", "-uploadsource=false", "-package=github.com/mattn/goveralls/tester", "-endpoint")
+		cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatal("Expected exit code 0 got 1", err, string(b))
+		}
+
+		jobBody := <-jobBodyChannel
+		for _, sf := range jobBody.SourceFiles {
+			if len(sf.Source) != 0 {
+				t.Fatalf("expected source for %q to be empty", sf.Name)
+			}
+		}
+	})
+}
+
 func prepareTest(t *testing.T) (tmpPath string) {
 	tmp, err := ioutil.TempDir("", "goveralls")
 	if err != nil {

@@ -65,6 +65,7 @@ var (
 	shallow       = flag.Bool("shallow", false, "Shallow coveralls internal server errors")
 	ignore        = flag.String("ignore", "", "Comma separated files to ignore")
 	insecure      = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
+	uploadSource  = flag.Bool("uploadsource", true, "Read local source and upload it to coveralls")
 	show          = flag.Bool("show", false, "Show which package is being tested")
 	customJobID   = flag.String("jobid", "", "Custom set job token")
 	jobNumber     = flag.String("jobnumber", "", "Custom set job number")
