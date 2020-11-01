@@ -252,6 +252,13 @@ func processParallelFinish(jobID, token string) error {
 	params.Set("payload[build_num]", jobID)
 	params.Set("payload[status]", "done")
 	res, err := http.PostForm(*endpoint+"/webhook", params)
+	if *debug {
+		if token != "" {
+			params.Set("repo_token", "*******")
+		}
+		log.Printf("Posted webhook data: %q", params.Encode())
+	}
+
 	if err != nil {
 		return err
 	}
@@ -292,7 +299,7 @@ func process() error {
 	flag.Parse()
 	if len(flag.Args()) > 0 {
 		flag.Usage()
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	//
@@ -448,6 +455,11 @@ func process() error {
 	}
 
 	if *debug {
+		j := j
+		if j.RepoToken != nil && *j.RepoToken != "" {
+			s := "*******"
+			j.RepoToken = &s
+		}
 		b, err := json.MarshalIndent(j, "", "  ")
 		if err != nil {
 			return err
