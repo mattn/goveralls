@@ -66,6 +66,7 @@ var (
 	ignore        = flag.String("ignore", "", "Comma separated files to ignore")
 	insecure      = flag.Bool("insecure", false, "Set insecure to skip verification of certificates")
 	uploadSource  = flag.Bool("uploadsource", true, "Read local source and upload it to coveralls")
+	allowGitFetch = flag.Bool("allowgitfetch", true, "Perform a 'git fetch' when the reference is different than HEAD; used for GitHub Actions integration")
 	show          = flag.Bool("show", false, "Show which package is being tested")
 	customJobID   = flag.String("jobid", "", "Custom set job token")
 	jobNumber     = flag.String("jobnumber", "", "Custom set job number")
@@ -412,12 +413,17 @@ func process() error {
 		return err
 	}
 
+	gitInfo, err := collectGitInfo(head)
+	if err != nil {
+		return err
+	}
+
 	j := Job{
 		RunAt:              time.Now(),
 		RepoToken:          repotoken,
 		ServicePullRequest: pullRequest,
 		Parallel:           parallel,
-		Git:                collectGitInfo(head),
+		Git:                gitInfo,
 		SourceFiles:        sourceFiles,
 		ServiceName:        *service,
 		FlagName:           *flagName,
