@@ -6,6 +6,8 @@ import (
 )
 
 func TestLoadBranchFromEnv(t *testing.T) {
+	t.Parallel()
+
 	var tests = []struct {
 		testCase       string
 		envs           map[string]string

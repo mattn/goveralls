@@ -81,8 +81,7 @@ func init() {
 
 // usage supplants package flag's Usage variable
 var usage = func() {
-	cmd := os.Args[0]
-	// fmt.Fprintf(os.Stderr, "Usage of %s:\n", cmd)
+	cmd := filepath.Base(os.Args[0])
 	s := "Usage: %s [options]\n"
 	fmt.Fprintf(os.Stderr, s, cmd)
 	flag.PrintDefaults()
