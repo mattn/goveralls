@@ -282,6 +282,27 @@ See also [related Jenkins documentation](https://www.jenkins.io/doc/book/pipelin
 
 It is also possible to let goveralls run the code coverage on its own without providing a coverage profile file.
 
+## TeamCity
+
+Store your Coveralls API token in `Environment Variables`:
+
+```
+COVERALLS_TOKEN=your_token_goes_here
+```
+
+Setup build steps:
+
+```
+$ go get github.com/mattn/goveralls
+$ export PULL_REQUEST_NUMBER=%teamcity.build.branch%
+$ goveralls -service teamcity -jobid %teamcity.build.id% -jobnumber %build.number%
+```
+
+`goveralls` will automatically use the environment variable `COVERALLS_TOKEN` as the
+default value for `-repotoken`.
+
+You can use the `-v` flag to see verbose output.
+
 ## Coveralls Enterprise
 
 If you are using Coveralls Enterprise and have a self-signed certificate, you need to skip certificate verification:
