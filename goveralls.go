@@ -386,8 +386,6 @@ func process() error {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("PULL_REQUEST_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
-	} else if prNumber := os.Getenv("BUILDKITE_PULL_REQUEST"); prNumber != "" {
-		pullRequest = prNumber
 	} else if prNumber := os.Getenv("DRONE_PULL_REQUEST"); prNumber != "" {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("BUILDKITE_PULL_REQUEST"); prNumber != "" {
