@@ -298,7 +298,7 @@ $ export PULL_REQUEST_NUMBER=%teamcity.build.branch%
 $ goveralls -service teamcity -jobid %teamcity.build.id% -jobnumber %build.number%
 ```
 
-`goveralls` automatically use the environment variable `COVERALLS_TOKEN` as the
+`goveralls` will automatically use the environment variable `COVERALLS_TOKEN` as the
 default value for `-repotoken`.
 
 You can use the `-v` flag to see verbose output.
