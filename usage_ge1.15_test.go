@@ -3,7 +3,6 @@
 package main
 
 import (
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -11,16 +10,20 @@ import (
 )
 
 func TestUsage(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
-	cmd := exec.Command("goveralls", "-h")
+	t.Parallel()
+
+	cmd := exec.Command(goverallsTestBin, "-h")
 	b, err := cmd.CombinedOutput()
 	runtime.Version()
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := strings.Split(string(b), "\n")[0]
-	if !strings.HasPrefix(s, "Usage: goveralls ") {
-		t.Fatalf("Expected %v, but %v", "Usage: ", s)
+	expectedPrefix := "Usage: goveralls"
+	if runtime.GOOS == "windows" {
+		expectedPrefix += ".exe"
+	}
+	if !strings.HasPrefix(s, expectedPrefix) {
+		t.Fatalf("Expected prefix %q, but got %q", expectedPrefix, s)
 	}
 }

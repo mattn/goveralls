@@ -8,12 +8,41 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
 	"net/http"
 	"net/http/httptest"
 )
+
+var goverallsTestBin string
+
+func TestMain(m *testing.M) {
+	tmpBin, err := ioutil.TempDir("", "goveralls_")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		os.Exit(1)
+	}
+
+	// generate the test binary used by all tests
+	goverallsTestBin = filepath.Join(tmpBin, "bin", "goveralls")
+	if runtime.GOOS == "windows" {
+		goverallsTestBin += ".exe"
+	}
+	_, err = exec.Command("go", "build", "-o", goverallsTestBin, ".").CombinedOutput()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		os.Exit(1)
+	}
+
+	// run all tests
+	exitVal := m.Run()
+
+	os.RemoveAll(tmpBin)
+
+	os.Exit(exitVal)
+}
 
 func fakeServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -47,14 +76,12 @@ func fakeServerWithPayloadChannel(payload chan Job) *httptest.Server {
 }
 
 func TestCustomJobId(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
-	jobBodyChannel := make(chan Job, 8096)
+	t.Parallel()
+
+	jobBodyChannel := make(chan Job, 16)
 	fs := fakeServerWithPayloadChannel(jobBodyChannel)
 
-	cmd := exec.Command("goveralls", "-jobid=123abc", "-package=github.com/mattn/goveralls/tester", "-endpoint")
-	cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
-	b, err := cmd.CombinedOutput()
+	b, err := testRun("-jobid=123abc", "-package=github.com/mattn/goveralls/tester", "-endpoint", "-v", "-endpoint", fs.URL)
 	if err != nil {
 		t.Fatal("Expected exit code 0 got 1", err, string(b))
 	}
@@ -67,28 +94,28 @@ func TestCustomJobId(t *testing.T) {
 }
 
 func TestInvalidArg(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
-	cmd := exec.Command("goveralls", "pkg")
-	b, err := cmd.CombinedOutput()
+	t.Parallel()
+
+	b, err := testRun("pkg")
 	if err == nil {
 		t.Fatal("Expected exit code 1 got 0")
 	}
 	s := strings.Split(string(b), "\n")[0]
-	if !strings.HasPrefix(s, "Usage: goveralls ") {
-		t.Fatalf("Expected %v, but %v", "Usage: ", s)
+	expectedPrefix := "Usage: goveralls"
+	if !strings.HasPrefix(s, expectedPrefix) {
+		t.Fatalf("Expected %q, but got %q", expectedPrefix, s)
 	}
 }
 
 func TestVerboseArg(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
+	t.Parallel()
+
 	fs := fakeServer()
 
 	t.Run("with verbose", func(t *testing.T) {
-		cmd := exec.Command("goveralls", "-package=github.com/mattn/goveralls/tester", "-v", "-endpoint")
-		cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
-		b, err := cmd.CombinedOutput()
+		t.Parallel()
+
+		b, err := testRun("-package=github.com/mattn/goveralls/tester", "-v", "-endpoint", "-v", "-endpoint", fs.URL)
 		if err != nil {
 			t.Fatal("Expected exit code 0 got 1", err, string(b))
 		}
@@ -99,9 +126,9 @@ func TestVerboseArg(t *testing.T) {
 	})
 
 	t.Run("without verbose", func(t *testing.T) {
-		cmd := exec.Command("goveralls", "-package=github.com/mattn/goveralls/tester", "-endpoint")
-		cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
-		b, err := cmd.CombinedOutput()
+		t.Parallel()
+
+		b, err := testRun("-package=github.com/mattn/goveralls/tester", "-endpoint", "-v", "-endpoint", fs.URL)
 		if err != nil {
 			t.Fatal("Expected exit code 0 got 1", err, string(b))
 		}
@@ -113,14 +140,14 @@ func TestVerboseArg(t *testing.T) {
 }
 
 func TestShowArg(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
+	t.Parallel()
+
 	fs := fakeServer()
 
 	t.Run("with show", func(t *testing.T) {
-		cmd := exec.Command("goveralls", "-package=github.com/mattn/goveralls/tester/...", "-show", "-endpoint")
-		cmd.Args = append(cmd.Args, "-show", "-endpoint", fs.URL)
-		b, err := cmd.CombinedOutput()
+		t.Parallel()
+
+		b, err := testRun("-package=github.com/mattn/goveralls/tester/...", "-show", "-endpoint", "-show", "-endpoint", fs.URL)
 		if err != nil {
 			t.Fatal("Expected exit code 0 got 1", err, string(b))
 		}
@@ -136,50 +163,30 @@ http://fake.url
 }
 
 func TestRaceArg(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
+	t.Parallel()
+
 	fs := fakeServer()
 
 	t.Run("it should pass the test", func(t *testing.T) {
-		cmd := exec.Command("goveralls", "-package=github.com/mattn/goveralls/tester", "-race")
-		cmd.Args = append(cmd.Args, "-endpoint", fs.URL)
-		b, err := cmd.CombinedOutput()
+		t.Parallel()
+
+		b, err := testRun("-package=github.com/mattn/goveralls/tester", "-race", "-endpoint", fs.URL)
 		if err != nil {
 			t.Fatal("Expected exit code 0 got 1", err, string(b))
 		}
 	})
 }
 
-/* FIXME: currently this doesn't work because the command goveralls will run
- * another session for this session.
-func TestGoveralls(t *testing.T) {
-	wd, _ := os.Getwd()
-	tmp := prepareTest(t)
-	os.Chdir(tmp)
-	defer func() {
-		os.Chdir(wd)
-		os.RemoveAll(tmp)
-	}()
-	runCmd(t, "go", "get", "github.com/mattn/goveralls/testergo-runewidth")
-	b := runCmd(t, "goveralls", "-package=github.com/mattn/goveralls/tester")
-	lines := strings.Split(strings.TrimSpace(string(b)), "\n")
-	s := lines[len(lines)-1]
-	if s != "Succeeded" {
-		t.Fatalf("Expected test of tester are succeeded, but failed")
-	}
-}
-*/
-
 func TestUploadSource(t *testing.T) {
-	tmp := prepareTest(t)
-	defer os.RemoveAll(tmp)
-	jobBodyChannel := make(chan Job, 8096)
-	fs := fakeServerWithPayloadChannel(jobBodyChannel)
+	t.Parallel()
 
 	t.Run("with uploadsource", func(t *testing.T) {
-		cmd := exec.Command("goveralls", "-uploadsource=true", "-package=github.com/mattn/goveralls/tester", "-endpoint")
-		cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
-		b, err := cmd.CombinedOutput()
+		t.Parallel()
+
+		jobBodyChannel := make(chan Job, 16)
+		fs := fakeServerWithPayloadChannel(jobBodyChannel)
+
+		b, err := testRun("-uploadsource=true", "-package=github.com/mattn/goveralls/tester", "-endpoint", "-v", "-endpoint", fs.URL)
 		if err != nil {
 			t.Fatal("Expected exit code 0 got 1", err, string(b))
 		}
@@ -194,9 +201,12 @@ func TestUploadSource(t *testing.T) {
 	})
 
 	t.Run("without uploadsource", func(t *testing.T) {
-		cmd := exec.Command("goveralls", "-uploadsource=false", "-package=github.com/mattn/goveralls/tester", "-endpoint")
-		cmd.Args = append(cmd.Args, "-v", "-endpoint", fs.URL)
-		b, err := cmd.CombinedOutput()
+		t.Parallel()
+
+		jobBodyChannel := make(chan Job, 16)
+		fs := fakeServerWithPayloadChannel(jobBodyChannel)
+
+		b, err := testRun("-uploadsource=false", "-package=github.com/mattn/goveralls/tester", "-endpoint", "-v", "-endpoint", fs.URL)
 		if err != nil {
 			t.Fatal("Expected exit code 0 got 1", err, string(b))
 		}
@@ -210,21 +220,8 @@ func TestUploadSource(t *testing.T) {
 	})
 }
 
-func prepareTest(t *testing.T) (tmpPath string) {
-	tmp, err := ioutil.TempDir("", "goveralls")
-	if err != nil {
-		t.Fatal("prepareTest:", err)
-	}
-	runCmd(t, "go", "build", "-o", filepath.Join(tmp, "bin", "goveralls"), "github.com/mattn/goveralls")
-	os.Setenv("PATH", filepath.Join(tmp, "bin")+string(filepath.ListSeparator)+os.Getenv("PATH"))
-	os.MkdirAll(filepath.Join(tmp, "src"), 0755)
-	return tmp
-}
-
-func runCmd(t *testing.T, cmd string, args ...string) []byte {
-	b, err := exec.Command(cmd, args...).CombinedOutput()
-	if err != nil {
-		t.Fatalf("Expected %v, but %v: %v", nil, err, string(b))
-	}
-	return b
+func testRun(args ...string) ([]byte, error) {
+	// always disallow the git fetch automatically used for GitHub Actions
+	args = append([]string{"-allowgitfetch=false"}, args...)
+	return exec.Command(goverallsTestBin, args...).CombinedOutput()
 }

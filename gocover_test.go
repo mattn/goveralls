@@ -8,6 +8,8 @@ import (
 )
 
 func TestMergeProfs(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		in   [][]*cover.Profile
 		want []*cover.Profile
