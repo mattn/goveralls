@@ -44,6 +44,7 @@ jobs:
         working-directory: src/github.com/mattn/goveralls
         env:
           COVERALLS_TOKEN: ${{ github.token }}
+          GIT_BRANCH: ${{ github.head_ref }}
 
   finish:
     needs: test
@@ -61,3 +62,4 @@ jobs:
           go run github.com/mattn/goveralls -parallel-finish
         env:
           COVERALLS_TOKEN: ${{ github.token }}
+          GIT_BRANCH: ${{ github.head_ref }}
