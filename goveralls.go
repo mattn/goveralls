@@ -379,9 +379,6 @@ func process() error {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("TRAVIS_PULL_REQUEST"); prNumber != "" && prNumber != "false" {
 		pullRequest = prNumber
-	} else if prURL := os.Getenv("CI_PULL_REQUEST"); prURL != "" {
-		// for Circle CI
-		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
 	} else if prNumber := os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("PULL_REQUEST_NUMBER"); prNumber != "" {
@@ -394,6 +391,15 @@ func process() error {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("CI_PR_NUMBER"); prNumber != "" {
 		pullRequest = prNumber
+	} else if prNumber := os.Getenv("CHANGE_ID"); prNumber != "" {
+		// for Jenkins multibranch projects
+		pullRequest = prNumber
+	} else if prURL := os.Getenv("CHANGE_URL"); prURL != "" {
+		// for Jenkins multibranch projects
+		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
+	} else if prURL := os.Getenv("CI_PULL_REQUEST"); prURL != "" {
+		// for Circle CI
+		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
 	} else if os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
 		number := githubEvent["number"].(float64)
 		pullRequest = strconv.Itoa(int(number))
