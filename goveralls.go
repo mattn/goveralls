@@ -354,6 +354,8 @@ func process() error {
 		jobID = codeshipjobID
 	} else if githubRunID := os.Getenv("GITHUB_RUN_ID"); githubRunID != "" {
 		jobID = githubRunID
+	} else if gitlabRunID := os.Getenv("CI_PIPELINE_ID"); gitlabRunID != "" {
+		jobID = gitlabRunID
 	}
 
 	if *repotoken == "" && *repotokenfile != "" {
@@ -407,6 +409,8 @@ func process() error {
 		ghPR := githubEvent["pull_request"].(map[string]interface{})
 		ghHead := ghPR["head"].(map[string]interface{})
 		head = ghHead["sha"].(string)
+	} else if prNumber := os.Getenv("CI_EXTERNAL_PULL_REQUEST_IID"); prNumber != "" {
+		pullRequest = prNumber
 	}
 
 	if *service == "" && os.Getenv("TRAVIS_JOB_ID") != "" {
