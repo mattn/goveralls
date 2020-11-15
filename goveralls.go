@@ -411,6 +411,8 @@ func process() error {
 		head = ghHead["sha"].(string)
 	} else if prNumber := os.Getenv("CI_EXTERNAL_PULL_REQUEST_IID"); prNumber != "" {
 		pullRequest = prNumber
+	} else if prNumber := os.Getenv("CI_MERGE_REQUEST_ID"); prNumber != "" {
+		pullRequest = prNumber
 	}
 
 	if *service == "" && os.Getenv("TRAVIS_JOB_ID") != "" {
