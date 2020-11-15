@@ -315,7 +315,7 @@ publish:coverage:
   stage: publish
   artifacts:
     paths:
-      - covprofile
+      - coverage.txt
   dependencies:
     - build:env
   when: always
