@@ -308,19 +308,20 @@ You can use the `-v` flag to see verbose output.
 
 Store your Coveralls API token as an [Environment Variable](https://docs.gitlab.com/ee/ci/variables/#create-a-custom-variable-in-the-ui) named `COVERALLS_TOKEN`.
 
-
 ```yml
 test:
   timeout: 30m
   stage: test
   artifacts:
     paths:
-      - covprofile
+      - coverage.txt
+  dependencies:
+    - build:env
   when: always
   script:
-    - go test -covermode atomic -coverprofile=covprofile ./...
+    - go test -covermode atomic -coverprofile=coverage.txt ./...
     - go get github.com/mattn/goveralls
-    - goveralls -service=gitlab -coverprofile=covprofile
+    - goveralls -service=gitlab -coverprofile=coverage.txt
 ```
 
 ## Coveralls Enterprise
