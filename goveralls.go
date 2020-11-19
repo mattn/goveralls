@@ -409,10 +409,10 @@ func process() error {
 		ghPR := githubEvent["pull_request"].(map[string]interface{})
 		ghHead := ghPR["head"].(map[string]interface{})
 		head = ghHead["sha"].(string)
-	} else if prNumber := os.Getenv("CI_EXTERNAL_PULL_REQUEST_IID"); prNumber != "" {
+	} else if prNumber := os.Getenv("CI_MERGE_REQUEST_IID"); prNumber != "" {
 		// pull request id from GitHub when building on GitLab
 		pullRequest = prNumber
-	} else if prNumber := os.Getenv("CI_MERGE_REQUEST_ID"); prNumber != "" {
+	} else if prNumber := os.Getenv("CI_EXTERNAL_PULL_REQUEST_IID"); prNumber != "" {
 		pullRequest = prNumber
 	}
 
