@@ -25,6 +25,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"DRONE_BRANCH":         "drone-master",
 				"BUILDKITE_BRANCH":     "buildkite-master",
 				"BRANCH_NAME":          "jenkins-master",
+				"CI_COMMIT_REF_NAME":   "gitlab-master",
 			},
 			"master",
 		},
@@ -39,6 +40,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"DRONE_BRANCH":         "drone-master",
 				"BUILDKITE_BRANCH":     "buildkite-master",
 				"BRANCH_NAME":          "jenkins-master",
+				"CI_COMMIT_REF_NAME":   "gitlab-master",
 			},
 			"circle-master",
 		},
@@ -52,6 +54,7 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"DRONE_BRANCH":         "drone-master",
 				"BUILDKITE_BRANCH":     "buildkite-master",
 				"BRANCH_NAME":          "jenkins-master",
+				"CI_COMMIT_REF_NAME":   "gitlab-master",
 			},
 			"travis-master",
 		},
@@ -96,6 +99,13 @@ func TestLoadBranchFromEnv(t *testing.T) {
 				"DRONE_BRANCH": "drone-master",
 			},
 			"drone-master",
+		},
+		{
+			"only CI_COMMIT_REF_NAME defined",
+			map[string]string{
+				"CI_COMMIT_REF_NAME": "gitlab-master",
+			},
+			"gitlab-master",
 		},
 		{
 			"GitHub Action push event",

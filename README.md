@@ -303,6 +303,27 @@ default value for `-repotoken`.
 
 You can use the `-v` flag to see verbose output.
 
+
+## Gitlab CI
+
+Store your Coveralls API token as an [Environment Variable](https://docs.gitlab.com/ee/ci/variables/#create-a-custom-variable-in-the-ui) named `COVERALLS_TOKEN`.
+
+```yml
+test:
+  timeout: 30m
+  stage: test
+  artifacts:
+    paths:
+      - coverage.txt
+  dependencies:
+    - build:env
+  when: always
+  script:
+    - go test -covermode atomic -coverprofile=coverage.txt ./...
+    - go get github.com/mattn/goveralls
+    - goveralls -service=gitlab -coverprofile=coverage.txt
+```
+
 ## Coveralls Enterprise
 
 If you are using Coveralls Enterprise and have a self-signed certificate, you need to skip certificate verification:
