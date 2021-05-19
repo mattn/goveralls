@@ -12,13 +12,24 @@ import (
 	"fmt"
 	"go/build"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/cover"
 )
 
-func findFile(file string) (string, error) {
+func findFile(rootPackage string, rootDir string, file string) (string, error) {
+	// If we find a file that is inside the root package, we already know
+	// where it should be!
+	if rootPackage != "" {
+		if relPath, _ := filepath.Rel(rootPackage, file); !strings.HasPrefix(relPath, "..") {
+			// The file is inside the root package...
+			return filepath.Join(rootDir, relPath), nil
+		}
+	}
+
 	dir, file := filepath.Split(file)
 	pkg, err := build.Import(dir, ".", build.FindOnly)
 	if err != nil {
@@ -102,9 +113,19 @@ func mergeTwoProfBlock(left, right []cover.ProfileBlock) []cover.ProfileBlock {
 
 // toSF converts profiles to sourcefiles for coveralls.
 func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
+	rootDirectory, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("get working dir: %w", err)
+	}
+	modPath := filepath.Join(rootDirectory, "go.mod")
+	rootPackage := ""
+	if content, err := os.ReadFile(modPath); err == nil {
+		rootPackage = modfile.ModulePath(content)
+	}
+
 	var rv []*SourceFile
 	for _, prof := range profs {
-		path, err := findFile(prof.FileName)
+		path, err := findFile(rootPackage, rootDirectory, prof.FileName)
 		if err != nil {
 			return nil, fmt.Errorf("cannot find file %q: %v", prof.FileName, err)
 		}
