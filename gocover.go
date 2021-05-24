@@ -119,7 +119,7 @@ func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 	}
 	modPath := filepath.Join(rootDirectory, "go.mod")
 	rootPackage := ""
-	if content, err := os.ReadFile(modPath); err == nil {
+	if content, err := ioutil.ReadFile(modPath); err == nil {
 		rootPackage = modfile.ModulePath(content)
 	}
 
