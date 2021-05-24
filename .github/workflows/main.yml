@@ -12,10 +12,7 @@ jobs:
           - macos-latest
           - windows-latest
         go:
-          - '1.7'  # minimum version that macos-latest supports
-          - '1.10' # last version that doesn't support go modules
-          - '1.11' # first version that supports go modules
-          - '1.x'  # latest version
+          - '1.16'  # latest version
     runs-on: ${{ matrix.os }}
 
     steps:
