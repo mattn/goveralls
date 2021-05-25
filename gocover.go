@@ -115,7 +115,7 @@ func mergeTwoProfBlock(left, right []cover.ProfileBlock) []cover.ProfileBlock {
 func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 	rootDirectory, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("get working dir: %w", err)
+		return nil, fmt.Errorf("get working dir: %v", err)
 	}
 	modPath := filepath.Join(rootDirectory, "go.mod")
 	rootPackage := ""
@@ -167,7 +167,7 @@ func parseCover(fn string) ([]*SourceFile, error) {
 	for _, p := range strings.Split(fn, ",") {
 		profs, err := cover.ParseProfiles(p)
 		if err != nil {
-			return nil, fmt.Errorf("Error parsing coverage: %v", err)
+			return nil, fmt.Errorf("error parsing coverage: %v", err)
 		}
 		pfss = append(pfss, profs)
 	}
