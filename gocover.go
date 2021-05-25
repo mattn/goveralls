@@ -16,7 +16,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/cover"
 )
 
@@ -113,15 +112,13 @@ func mergeTwoProfBlock(left, right []cover.ProfileBlock) []cover.ProfileBlock {
 
 // toSF converts profiles to sourcefiles for coveralls.
 func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
+	// find root package to reduce build.Import calls when importing files from relative root
+	// https://github.com/mattn/goveralls/pull/195
 	rootDirectory, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("get working dir: %v", err)
 	}
-	modPath := filepath.Join(rootDirectory, "go.mod")
-	rootPackage := ""
-	if content, err := ioutil.ReadFile(modPath); err == nil {
-		rootPackage = modfile.ModulePath(content)
-	}
+	rootPackage := findRootPackage(rootDirectory)
 
 	var rv []*SourceFile
 	for _, prof := range profs {
