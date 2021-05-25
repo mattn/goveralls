@@ -36,6 +36,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: build
         run: |
+          go get ./...
           go install .
         working-directory: src/github.com/mattn/goveralls
       - name: test
