@@ -54,6 +54,10 @@ func fakeServer() *httptest.Server {
 func fakeServerWithPayloadChannel(payload chan Job) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		// query params are used for the body payload
 		vals, err := url.ParseQuery(string(body))
 		if err != nil {
