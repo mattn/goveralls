@@ -332,6 +332,38 @@ If you are using Coveralls Enterprise and have a self-signed certificate, you ne
 $ goveralls -insecure
 ```
 
+## Prow
+
+Goveralls can be used in [prow](https://github.com/kubernetes/test-infra/tree/master/prow) presubmit jobs, picking up the prow [environment variables](https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables) `PULL_PULL_SHA`, `PULL_BASE_REF` and `PULL_NUMBER` to determine the original git commit id, the branch and the PR number automatically.
+
+To avoid leaking your coveralls repo token you can use the `COVERALLS_TOKEN_FILE` env variable, so that a token gets read and used in the API call.
+
+When configuring your prow job you can mount a defined secret containing your token like this:
+
+```yaml
+  ...
+  - name: coveralls
+    always_run: true
+    optional: false
+    spec:
+      containers:
+      - image: gcr.io/k8s-testimages/...
+        env:
+          - name: COVERALLS_TOKEN_FILE
+            value: /etc/secrets/coveralls/token
+        command:
+          - "goveralls -service=prow"
+        volumeMounts:
+          - name: coveralls
+            mountPath: /etc/secrets/coveralls
+            readOnly: true
+      volumes:
+        - name: coveralls
+          secret:
+            secretName: coveralls-token
+  ...
+```
+
 # Authors
 
 * Yasuhiro Matsumoto (a.k.a. mattn)

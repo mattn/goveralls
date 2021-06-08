@@ -65,6 +65,15 @@ func collectGitInfo(ref string) (*Git, error) {
 				continue
 			}
 		}
+		if key == "GIT_ID" {
+			if envGitId := loadGitIdFromEnv(); envGitId != "" {
+				err := os.Setenv(key, envGitId)
+				if err != nil {
+					return nil, err
+				}
+				continue
+			}
+		}
 		if os.Getenv(key) != "" {
 			// metadata already available via environment variable
 			continue
@@ -129,7 +138,7 @@ var varNames = [...]string{
 	"CI_BRANCH", "APPVEYOR_REPO_BRANCH",
 	"WERCKER_GIT_BRANCH", "DRONE_BRANCH",
 	"BUILDKITE_BRANCH", "BRANCH_NAME",
-	"CI_COMMIT_REF_NAME",
+	"CI_COMMIT_REF_NAME", "PULL_BASE_REF",
 }
 
 func loadBranchFromEnv() string {
@@ -139,6 +148,22 @@ func loadBranchFromEnv() string {
 				return strings.TrimPrefix(branch, "refs/heads/")
 			}
 			return branch
+		}
+	}
+
+	return ""
+}
+
+var gitIdVarNames = [...]string{
+	"GIT_ID",
+
+	"PULL_PULL_SHA",
+}
+
+func loadGitIdFromEnv() string {
+	for _, gitIdVarName := range gitIdVarNames {
+		if gitId := os.Getenv(gitIdVarName); gitId != "" {
+			return gitId
 		}
 	}
 
