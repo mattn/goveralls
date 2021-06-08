@@ -115,6 +115,13 @@ func TestLoadBranchFromEnv(t *testing.T) {
 			"github-master",
 		},
 		{
+			"Prow PULL_BASE_REF defined",
+			map[string]string{
+				"PULL_BASE_REF": "prow-master",
+			},
+			"prow-master",
+		},
+		{
 			"no branch var defined",
 			map[string]string{},
 			"",
@@ -131,6 +138,53 @@ func TestLoadBranchFromEnv(t *testing.T) {
 
 func resetBranchEnvs(values map[string]string) {
 	for _, envVar := range varNames {
+		os.Unsetenv(envVar)
+	}
+	for k, v := range values {
+		os.Setenv(k, v)
+	}
+}
+
+func TestLoadGitIdFromEnv(t *testing.T) {
+	t.Parallel()
+
+	var tests = []struct {
+		testCase      string
+		envs          map[string]string
+		expectedGitId string
+	}{
+		{
+			"all vars defined",
+			map[string]string{
+				"GIT_ID":           "git-id",
+				"PULL_PULL_SHA": "prow-git-id",
+			},
+			"git-id",
+		},
+		{
+			"all except GIT_ID",
+			map[string]string{
+				"PULL_PULL_SHA": "prow-git-id",
+			},
+			"prow-git-id",
+		},
+		{
+			"no git id defined",
+			map[string]string{},
+			"",
+		},
+	}
+	for _, test := range tests {
+		resetGitIdEnvs(test.envs)
+		envGitId := loadGitIdFromEnv()
+		if envGitId != test.expectedGitId {
+			t.Errorf("%s: wrong git id returned. Expected %q, but got %q", test.testCase, test.expectedGitId, envGitId)
+		}
+	}
+}
+
+func resetGitIdEnvs(values map[string]string) {
+	for _, envVar := range gitIdVarNames {
 		os.Unsetenv(envVar)
 	}
 	for k, v := range values {
