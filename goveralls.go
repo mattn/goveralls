@@ -268,12 +268,23 @@ func processParallelFinish(jobID, token string) error {
 		return fmt.Errorf("unable to read response body from coveralls: %s", err)
 	}
 
-	if res.StatusCode >= http.StatusInternalServerError && *shallow {
-		fmt.Println("coveralls server failed internally")
-		return nil
+	if *shallow {
+		if res.StatusCode >= http.StatusInternalServerError {
+			fmt.Println("coveralls server failed internally")
+			return nil
+		}
+
+		// XXX: It looks that Coveralls is under maintenance.
+		// Coveralls serves the maintenance page as a static HTML hosting,
+		// and the maintenance page doesn't accept POST method.
+		// See https://github.com/mattn/goveralls/issues/204
+		if res.StatusCode == http.StatusMethodNotAllowed {
+			fmt.Println("it looks that Coveralls is under maintenance. visit https://status.coveralls.io/")
+			return nil
+		}
 	}
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("bad response status from coveralls: %d\n%s", res.StatusCode, bodyBytes)
 	}
 
