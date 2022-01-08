@@ -52,9 +52,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v2
       with:
-        go-version: '1.13'
+        go-version: '1.16'
     - name: Check out code
       uses: actions/checkout@v2
     - name: Install dependencies
