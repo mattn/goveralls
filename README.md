@@ -119,6 +119,50 @@ jobs:
         working-directory: src/example.com/owner/repo # add this
 ```
 
+### Comment code coverage link
+
+If you like to post a comment with the latest coveralls job link you can use the following template. To make this work the [create-or-update-comment](https://github.com/peter-evans/create-or-update-comment) github action is used. 
+
+```yaml
+name: Quality
+on: [push, pull_request]
+jobs:
+  coveralls:
+    runs-on: ubuntu-latest
+    steps:
+    # - Set up Go
+    # - Check out code
+    # - Install dependencies
+    # - Run Unit tests
+    # - Install goveralls
+
+    - name: Send coverage
+      id: send-coverage
+      env:
+        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        CODE_COVERAGE_LINK=$(goveralls -coverprofile=covprofile -service=github)
+        coverage=$(echo $CODE_COVERAGE_LINK)
+        echo "::set-output name=coverage::$coverage"
+
+    - name: Find Comment
+      uses: peter-evans/find-comment@v2
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Code coverage link
+
+    - name: Create or update comment
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          Code coverage link: ${{ steps.send-coverage.outputs.coverage }}
+        edit-mode: replace
+```
+
 ## Travis CI
 
 ### GitHub Integration
