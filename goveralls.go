@@ -248,7 +248,9 @@ func processParallelFinish(jobID, token string) error {
 
 	params := make(url.Values)
 	params.Set("repo_token", token)
-	params.Set("repo_name", name)
+	if name != "" {
+		params.Set("repo_name", name)
+	}
 	params.Set("payload[build_num]", jobID)
 	params.Set("payload[status]", "done")
 	res, err := http.PostForm(*endpoint+"/webhook", params)
