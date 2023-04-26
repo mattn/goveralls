@@ -6,7 +6,7 @@ continuous code coverage tracking system.
 
 # Installation
 
-`goveralls` requires a working Go installation (Go-1.2 or higher).
+`goveralls` requires a working Go installation (Go-1.13 or higher).
 
 ```bash
 $ go install github.com/mattn/goveralls@latest
