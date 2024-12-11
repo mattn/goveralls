@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -24,6 +25,7 @@ func findFile(rootPackage string, rootDir string, file string) (string, error) {
 	// If we find a file that is inside the root package, we already know
 	// where it should be!
 	if rootPackage != "" {
+
 		if relPath, _ := filepath.Rel(rootPackage, file); !strings.HasPrefix(relPath, "..") {
 			// The file is inside the root package...
 			return filepath.Join(rootDir, relPath), nil
@@ -149,7 +151,21 @@ func toSF(profs []*cover.Profile) ([]*SourceFile, error) {
 		if *uploadSource {
 			fb, err := ioutil.ReadFile(path)
 			if err != nil {
-				return nil, fmt.Errorf("cannot read source of file %q: %v", path, err)
+				// Golang module versioning can either be done
+				// via a subdirectory or updated via a branch
+				// commit. For more infomation see:
+				// https://go.dev/wiki/Modules#releasing-modules-v2-or-higher
+				basePath := regexp.MustCompile(`/v\d+/`).
+					ReplaceAllString(path, "/")
+
+				if basePath != path {
+					fb, err = ioutil.ReadFile(basePath)
+				}
+				if err != nil {
+					return nil, fmt.Errorf("cannot read "+
+						"source of file %q: %v", path,
+						err)
+				}
 			}
 			sf.Source = string(fb)
 		}
