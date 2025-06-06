@@ -51,12 +51,12 @@ jobs:
     name: Test with Coverage
     runs-on: ubuntu-latest
     steps:
+     - name: Check out code
+      uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.16'
-    - name: Check out code
-      uses: actions/checkout@v2
+        go-version: 'stable'
     - name: Install dependencies
       run: |
         go mod download
