@@ -12,18 +12,18 @@ jobs:
           - macos-latest
           - windows-latest
         go:
-          - '1.13' # minimum version
+          - '1.16' # minimum version
           - 'oldstable'
           - 'stable'
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Go ${{ matrix.go }}
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
       - run: go version
@@ -42,11 +42,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
       - name: finish
         run: |
           go run github.com/mattn/goveralls -parallel-finish
