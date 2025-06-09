@@ -12,7 +12,7 @@ jobs:
           - macos-latest
           - windows-latest
         go:
-          - '1.13' # minimum version
+          - '1.16' # minimum version
           - 'oldstable'
           - 'stable'
     runs-on: ${{ matrix.os }}
