@@ -12,13 +12,9 @@ jobs:
           - macos-latest
           - windows-latest
         go:
-          - "1.13" # minimum version
+          - "1.25" # minimum version
           - "oldstable"
           - "stable"
-        exclude:
-          # Go 1.13 doesn't support Apple Silicon
-          - os: macos-latest
-            go: "1.13"
     runs-on: ${{ matrix.os }}
 
     steps:
