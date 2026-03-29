@@ -47,6 +47,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version-file: go.mod
       - name: finish
         run: |
           go run github.com/mattn/goveralls -parallel-finish
