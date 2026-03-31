@@ -12,31 +12,48 @@ continuous code coverage tracking system.
 $ go install github.com/mattn/goveralls@latest
 ```
 
-
 # Usage
 
-First you will need an API token.  It is found at the bottom of your
-repository's page when you are logged in to Coveralls.io.  Each repo has its
-own token.
+For non-public repositories you will need a Coveralls.io token; it is found at the bottom of your
+repository's page when you are logged in to Coveralls.io.  Each repository has its own token.
 
 ```bash
 $ cd $GOPATH/src/github.com/yourusername/yourpackage
 $ goveralls -repotoken your_repos_coveralls_token
 ```
 
-You can set the environment variable `$COVERALLS_TOKEN` to your token so you do
-not have to specify it at each invocation.
-
+It is advised to set the environment variable `COVERALLS_TOKEN` to your token so you do
+not have to specify it at each invocation through `-repotoken`, which is less secure.
 
 You can also run this reporter for multiple passes with the flag `-parallel` or
 by setting the environment variable `COVERALLS_PARALLEL=true` (see [coveralls
 docs](https://docs.coveralls.io/parallel-build-webhook) for more details).
 
+`goveralls` will run the entire test suite when no coverage profile files are provided with `-coverprofile`;
+you can use `-flags` to pass extra flags to the Go tests run by goveralls.
+
+## Environment variables
+
+Some metadata used when submitting a Coveralls.io job can be specified via any of the mentioned environment variables:
+
+* job ID: `COVERALLS_SERVICE_JOB_ID`, `TRAVIS_JOB_ID`, `CIRCLE_BUILD_NUM`, `APPVEYOR_JOB_ID`, `SEMAPHORE_BUILD_NUMBER`, `BUILD_NUMBER`, `BUILDKITE_BUILD_ID`, `DRONE_BUILD_NUMBER`, `BUILDKITE_BUILD_NUMBER`, `CI_BUILD_ID`, `GITHUB_RUN_ID`
+* branch name: `GIT_BRANCH`, `GITHUB_HEAD_REF`, `GITHUB_REF`,	`CIRCLE_BRANCH`, `TRAVIS_BRANCH`, `CI_BRANCH`, `APPVEYOR_REPO_BRANCH`, `WERCKER_GIT_BRANCH`, `DRONE_BRANCH`, `BUILDKITE_BRANCH`, `BRANCH_NAME`
+* pull request number: `CIRCLE_PR_NUMBER`, `TRAVIS_PULL_REQUEST`, `APPVEYOR_PULL_REQUEST_NUMBER`, `PULL_REQUEST_NUMBER`, `BUILDKITE_PULL_REQUEST`, `DRONE_PULL_REQUEST`, `CI_PR_NUMBER`
+* pull request number (extracted with regex): `CI_PULL_REQUEST`, `GITHUB_EVENT_NAME`
+* repository token: `COVERALLS_TOKEN`
+* repository token file: `COVERALLS_TOKEN_FILE`
+* parallel flag: `COVERALLS_PARALLEL`
+* Coveralls.io job flag name: `COVERALLS_FLAG_NAME`
+* repository name: `GITHUB_REPOSITORY`
+
+### Special cases
+
+* when `TRAVIS_JOB_ID` is specified then `-service` will automatically be set to `travis-ci`.
+* when `GITHUB_EVENT_NAME` is set to `pull_request` then the file at `GITHUB_EVENT_PATH` will be attempted read and used to parse the pull request number and the Git HEAD reference.
 
 # Continuous Integration
 
-There is no need to run `go test` separately, as `goveralls` runs the entire
-test suite.
+It is possible to use goveralls with any Continuous Integration platform; integration with the most common ones is explained below with some examples.
 
 ## GitHub Actions
 
